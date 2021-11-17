@@ -5,7 +5,6 @@ import { Utils } from "@models/Utils";
 import { Constants } from "@constants";
 import webdriver, { By } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
-import chromium from 'chromium';
 import 'chromedriver';
 
 export class DailyPlanning {
@@ -24,7 +23,7 @@ export class DailyPlanning {
      */
     static async fetchDailyPlanning(date: Dayjs): Promise<DailyPlanning> {
         let options = new chrome.Options();
-        options.setChromeBinaryPath(chromium.path);
+        options.setChromeBinaryPath(require('puppeteer').executablePath());
         options.addArguments('--headless');
         options.addArguments('--disable-gpu');
         options.addArguments('--window-size=1280,960');
