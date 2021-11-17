@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "target": "es2015",
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "lib": ["es2020"],
+
+    "strict": true,
+    "noImplicitAny": false,
+
+    "paths": {
+      "@models/*": [ "models/*" ],
+      "@enums/*": [ "enums/*" ],
+      "@constants": [ "Constants" ]
+    }
+  }
+}

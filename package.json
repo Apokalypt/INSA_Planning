@@ -1,0 +1,50 @@
+{
+  "name": "insa_planning",
+  "version": "1.0.0",
+  "description": "A typescript discord bot",
+  "main": "dist/server.js",
+  "scripts": {
+    "transpile": "tsc",
+    "build": "npm install --include=dev && npm run transpile && npm install --only=production && cp package*.json dist && sed 's+dist/server.js+server.js+g' package.json > dist/package.json",
+    "start": "npm install --include=dev && npm run transpile && node dist/server.js",
+    "dev": "npm install --include=dev && nodemon --config nodemon.json src/server.ts --trace-warnings",
+    "dev:debug": "npm install --include=dev && nodemon --config nodemon.json --inspect-brk src/server.ts --trace-warnings"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Apokalypt/INSA_Planning.git"
+  },
+  "author": "Apokalypt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Apokalypt/INSA_Planning/issues"
+  },
+  "homepage": "https://github.com/Apokalypt/INSA_Planning#readme",
+  "devDependencies": {
+    "@types/selenium-webdriver": "^4.0.16",
+    "@typescript-eslint/eslint-plugin": "^5.3.1",
+    "@typescript-eslint/parser": "^5.3.1",
+    "@types/cron": "^1.7.3",
+    "eslint": "^8.2.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-node": "^11.1.0",
+    "typescript": "^4.4.4"
+  },
+  "dependencies": {
+    "chromedriver": "^95.0.0",
+    "chromium": "^3.0.3",
+    "cron": "^1.8.2",
+    "dayjs": "^1.10.7",
+    "discord.js": "^13.3.1",
+    "dotenv": "^10.0.0",
+    "module-alias": "^2.2.2",
+    "nodemon": "^2.0.15",
+    "selenium-webdriver": "^4.0.0",
+    "ts-node": "^10.4.0"
+  },
+  "_moduleAliases": {
+    "@models": "./src/models",
+    "@enums": "./src/enums",
+    "@constants": "./src/Constants"
+  }
+}
