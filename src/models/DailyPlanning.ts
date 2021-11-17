@@ -56,7 +56,7 @@ export class DailyPlanning {
         // If found, we search the <tr> parent to have all information about the daily planning
         const trDay = await thDay.findElement(By.xpath('..'));
         // We convert all <td> into lesson objects
-        const lessonsCode = await Promise.all(
+        const lessonsCode: Lesson[] = await Promise.all(
             (await trDay.findElements(By.xpath('td[contains(@id,\'slot-\')]')))
                 .map(lessonCode => Lesson.createFromHTMLCode(date, lessonCode))
         );
