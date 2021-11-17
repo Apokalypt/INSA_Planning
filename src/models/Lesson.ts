@@ -88,7 +88,7 @@ export class Lesson {
                 throw new Error("Lesson description should have a start hour and a place");
             } else if (!startHourPlaceData) {
                 return new Lesson(
-                    date.hour(parseInt(startHourPlace.split("h")[0])).minute(parseInt(startHourPlace.split("h")[1])),
+                    date.tz("Europe/Paris").hour(parseInt(startHourPlace.split("h")[0])).minute(parseInt(startHourPlace.split("h")[1])),
                     colspan,
                     await otherData[1].getText(),
                     descriptionData.name,
@@ -98,7 +98,7 @@ export class Lesson {
                 const startHour = startHourPlaceData.startHour;
 
                 return new Lesson(
-                    date.hour(parseInt(startHour.split("h")[0])).minute(parseInt(startHour.split("h")[1])),
+                    date.tz("Europe/Paris").hour(parseInt(startHour.split("h")[0])).minute(parseInt(startHour.split("h")[1])),
                     colspan,
                     await otherData[1].getText(),
                     descriptionData.name,

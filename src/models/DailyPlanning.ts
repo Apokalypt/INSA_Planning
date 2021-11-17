@@ -5,7 +5,6 @@ import { Utils } from "@models/Utils";
 import { Constants } from "@constants";
 import webdriver, { By } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
-import chromium from 'chromium';
 import 'chromedriver';
 
 export class DailyPlanning {
@@ -24,7 +23,7 @@ export class DailyPlanning {
      */
     static async fetchDailyPlanning(date: Dayjs): Promise<DailyPlanning> {
         let options = new chrome.Options();
-        options.setChromeBinaryPath(chromium.path);
+        options.setChromeBinaryPath(require('puppeteer').executablePath());
         options.addArguments('--headless');
         options.addArguments('--disable-gpu');
         options.addArguments('--window-size=1280,960');
@@ -57,7 +56,7 @@ export class DailyPlanning {
         // If found, we search the <tr> parent to have all information about the daily planning
         const trDay = await thDay.findElement(By.xpath('..'));
         // We convert all <td> into lesson objects
-        const lessonsCode = await Promise.all(
+        const lessonsCode: Lesson[] = await Promise.all(
             (await trDay.findElements(By.xpath('td[contains(@id,\'slot-\')]')))
                 .map(lessonCode => Lesson.createFromHTMLCode(date, lessonCode))
         );
