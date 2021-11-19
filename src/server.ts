@@ -6,14 +6,14 @@ import { BotClient } from '@models/BotClient'
 
 // Setup for the dayjs library
 import dayjs from 'dayjs'
-import pluginUTC from 'dayjs/plugin/utc'
-import pluginTimezone from 'dayjs/plugin/timezone'
-import pluginDuration from 'dayjs/plugin/duration'
 import 'dayjs/locale/fr'
-dayjs.extend(pluginUTC)
-dayjs.extend(pluginTimezone)
-dayjs.extend(pluginDuration)
 dayjs.locale('fr')
+import pluginUTC from 'dayjs/plugin/utc'
+dayjs.extend(pluginUTC)
+import pluginTimezone from 'dayjs/plugin/timezone'
+dayjs.extend(pluginTimezone)
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(customParseFormat);
 
 dotenv.config()
 
@@ -24,5 +24,5 @@ console.info('[INFO] Starting the bot...');
 
 BotClient.login({
     token: process.env.INSA_PLANNING_BOT_TOKEN ?? '',
-    intents: [Intents.FLAGS.GUILDS]
+    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILD_MESSAGES]
 }).then(_ => null);

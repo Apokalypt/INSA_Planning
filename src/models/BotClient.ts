@@ -1,9 +1,11 @@
 import type { ClientOptions } from 'discord.js'
+import { Collection } from 'discord.js'
 import type { BotEvents } from './BotEvents'
 import * as fs from 'fs'
 import { Client } from 'discord.js'
 import type { Event } from './Event'
 import path from 'path'
+import type { InteractionCommandData } from "@models/InteractionCommandData";
 
 /**
  * Extension of the djs client to add some data
@@ -14,6 +16,10 @@ export class BotClient extends Client<true> {
      * Version of the bot find in 'package.json'
      */
     public readonly version: number;
+    /**
+     * Collection of all commands, the key is the commands name
+     */
+    public readonly commands: Collection<string, InteractionCommandData>;
 
     /* ======================= Constructor ======================= */
     /**
@@ -26,8 +32,11 @@ export class BotClient extends Client<true> {
       super(options);
 
       this.version = require('../../package.json').version;
+      this.commands = new Collection<string, InteractionCommandData>();
 
-      this._registerClientEvents();
+
+        this._registerClientEvents();
+        this._registerCommands();
     }
 
     /* ======================== Functions ======================== */
@@ -46,6 +55,13 @@ export class BotClient extends Client<true> {
           this.on(event.name, (...args) => event.action(this, ...args));
         }
       })
+    }
+
+    private _registerCommands() {
+        fs.readdirSync(`${__dirname}/../commands/slash`).filter(file => file.endsWith('.js') || file.endsWith('.ts')).forEach((file) => {
+            const command: InteractionCommandData = require(`${__dirname}/../commands/slash/${file}`);
+            this.commands.set(command.data.name, command);
+        });
     }
 
     /* ==================== Override function ==================== */
