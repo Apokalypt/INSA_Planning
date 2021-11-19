@@ -6,6 +6,7 @@ import { Constants } from "@constants";
 import webdriver, { By } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 import 'chromedriver';
+import type { BotClient } from "@models/BotClient";
 
 export class DailyPlanning {
     lessons: Lesson[];
@@ -94,5 +95,27 @@ export class DailyPlanning {
 
             return embed;
         }
+    }
+
+
+    /**
+     * Publish the daily planning on the dedicated channel
+     *
+     * @param client
+     */
+    async publish(client: BotClient): Promise<void> {
+        return client.channels.fetch(process.env.INSA_PLANNING_CHANNEL_ID ?? "")
+            .then(async channel => {
+                if (channel?.isText()) await channel.send({embeds: [this.generateEmbed()]});
+            })
+    }
+
+    /**
+     * Plan the reminder for each lesson
+     *
+     * @param client
+     */
+    planSWSReminders(client: BotClient) {
+        this.lessons.forEach( lesson => lesson.planSWSReminder(client) );
     }
 }
