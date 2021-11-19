@@ -1,6 +1,8 @@
 import { Dayjs } from "dayjs";
 import { By, WebElement } from "selenium-webdriver";
 import { Utils } from "@models/Utils";
+import type { BotClient } from "@models/BotClient";
+import * as scheduler from "node-schedule";
 
 export class Lesson {
     startDate: Dayjs;
@@ -110,12 +112,9 @@ export class Lesson {
     }
 
     getEmojiTime(): string {
-        let hour = this.startDate.hour();
-        if (hour > 12) {
-            hour -= 12;
-        }
-
+        const hour = (this.startDate.hour() % 12) + 1;
         const minutes = this.startDate.minute();
+
         if (minutes === 30) {
             return `:clock${hour}${minutes}:`
         } else {
@@ -128,5 +127,33 @@ export class Lesson {
             `${Utils.getEmojiFromLessonType(this.type)}  **${this.type}**  |  ${this.title}` + "\n" +
             `:school:  ${this.place ?? ""}` + "\n" +
             `:teacher:  ${this.teacher}` + "\n";
+    }
+
+
+    /**
+     * Scheduling to send a message in the correct channel to remind students to sign on SWS
+     *
+     * @param client
+     */
+    planSWSReminder(client: BotClient) {
+        scheduler.scheduleJob(
+            this.endDate.subtract(15, "minutes").toDate(),
+            async () => {
+                return client.channels.fetch(process.env.INSA_SWS_CHANNEL_ID ?? "")
+                    .then( channel => {
+                        if (!channel?.isText()) return;
+
+                        return channel.send("Le cours se termine dans 15 minutes. Pensez à signer sur SWS !\n*Ce message sera supprimé 5 minutes après la fin du cours.*")
+                            .then( message => {
+                                scheduler.scheduleJob(
+                                    this.endDate.add(5, "minutes").toDate(),
+                                    () => message.delete().catch(console.error)
+                                );
+                            })
+                            .catch(console.error);
+                    })
+                    .catch(console.error);
+            }
+        );
     }
 }
