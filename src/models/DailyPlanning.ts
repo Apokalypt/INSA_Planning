@@ -70,7 +70,7 @@ export class DailyPlanning {
     }
 
 
-    generateEmbed(): MessageEmbed {
+    toEmbed(): MessageEmbed {
         const title = Utils.bold(":calendar:  Emploi du temps du <t:" + this.date.hour(0).minute(0).unix() + ":D> :");
 
         if (this.lessons.length === 0) {
@@ -106,7 +106,7 @@ export class DailyPlanning {
     async publish(client: BotClient): Promise<void> {
         return client.channels.fetch(process.env.INSA_PLANNING_CHANNEL_ID ?? "")
             .then(async channel => {
-                if (channel?.isText()) await channel.send({embeds: [this.generateEmbed()]});
+                if (channel?.isText()) await channel.send({embeds: [this.toEmbed()]});
             })
     }
 
