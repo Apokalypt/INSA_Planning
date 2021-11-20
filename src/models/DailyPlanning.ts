@@ -69,6 +69,10 @@ export class DailyPlanning {
         return new DailyPlanning(lessonsCode, date);
     }
 
+
+    /**
+     * Generate webhook edit options from the current daily planning
+     */
     toWebhookEditMessageOptions(): WebhookEditMessageOptions {
         return {
             embeds: [this._toEmbed()],
@@ -94,7 +98,7 @@ export class DailyPlanning {
     async publish(client: BotClient): Promise<void> {
         return client.channels.fetch(process.env.INSA_PLANNING_CHANNEL_ID ?? "")
             .then(async channel => {
-                if (channel?.isText()) await channel.send({embeds: [this._toEmbed()]});
+                if (channel?.isText()) await channel.send(this.toWebhookEditMessageOptions());
             })
     }
 
