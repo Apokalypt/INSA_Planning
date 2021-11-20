@@ -15,7 +15,7 @@ export = new Event(
 
                 await DailyPlanning.fetchDailyPlanning(date)
                     .then( async timetable => {
-                        return interaction.editReply({ embeds: [timetable.toEmbed()] });
+                        return interaction.editReply(timetable.toWebhookEditMessageOptions());
                     })
                     .catch(_ => {
                         return interaction.editReply({

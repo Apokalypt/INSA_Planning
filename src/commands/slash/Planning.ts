@@ -32,7 +32,7 @@ export = {
 
             await DailyPlanning.fetchDailyPlanning(dayjs.tz(date.format("DD/MM/YYYY"), "DD/MM/YYYY", "Europe/Paris"))
                 .then( async timetable => {
-                    return interaction.editReply({ embeds: [timetable.toEmbed()] });
+                    return interaction.editReply(timetable.toWebhookEditMessageOptions());
                 })
                 .catch(_ => {
                     return interaction.editReply({

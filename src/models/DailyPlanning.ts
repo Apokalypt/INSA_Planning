@@ -1,6 +1,6 @@
 import { Dayjs } from "dayjs";
 import { Lesson } from "@models/Lesson";
-import { MessageEmbed } from "discord.js";
+import { MessageActionRow, MessageButton, MessageEmbed, WebhookEditMessageOptions } from "discord.js";
 import { Utils } from "@models/Utils";
 import { Constants } from "@constants";
 import webdriver, { By } from 'selenium-webdriver';
@@ -69,8 +69,48 @@ export class DailyPlanning {
         return new DailyPlanning(lessonsCode, date);
     }
 
+    toWebhookEditMessageOptions(): WebhookEditMessageOptions {
+        return {
+            embeds: [this._toEmbed()],
+            components: [
+                new MessageActionRow()
+                    .setComponents(
+                        new MessageButton()
+                            .setCustomId(this.date.add(this.date.day() === 5 ? 3 : 1, 'day').format('DD/MM/YYYY'))
+                            .setLabel("Voir le planning du jour suivant")
+                            .setStyle("PRIMARY")
+                            .setEmoji("🗓️")
+                    )
+            ]
+        };
+    }
 
-    toEmbed(): MessageEmbed {
+
+    /**
+     * Publish the daily planning on the dedicated channel
+     *
+     * @param client
+     */
+    async publish(client: BotClient): Promise<void> {
+        return client.channels.fetch(process.env.INSA_PLANNING_CHANNEL_ID ?? "")
+            .then(async channel => {
+                if (channel?.isText()) await channel.send({embeds: [this._toEmbed()]});
+            })
+    }
+
+    /**
+     * Plan the reminder for each lesson
+     *
+     * @param client
+     */
+    planSWSReminders(client: BotClient) {
+        this.lessons.forEach( lesson => lesson.planSWSReminder(client) );
+    }
+
+    /**
+     * Generate an embed message based on the daily planning
+     */
+    private _toEmbed(): MessageEmbed {
         const title = Utils.bold(":calendar:  Emploi du temps du <t:" + this.date.hour(0).minute(0).unix() + ":D> :");
 
         if (this.lessons.length === 0) {
@@ -95,27 +135,5 @@ export class DailyPlanning {
 
             return embed;
         }
-    }
-
-
-    /**
-     * Publish the daily planning on the dedicated channel
-     *
-     * @param client
-     */
-    async publish(client: BotClient): Promise<void> {
-        return client.channels.fetch(process.env.INSA_PLANNING_CHANNEL_ID ?? "")
-            .then(async channel => {
-                if (channel?.isText()) await channel.send({embeds: [this.toEmbed()]});
-            })
-    }
-
-    /**
-     * Plan the reminder for each lesson
-     *
-     * @param client
-     */
-    planSWSReminders(client: BotClient) {
-        this.lessons.forEach( lesson => lesson.planSWSReminder(client) );
     }
 }
