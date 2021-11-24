@@ -1,8 +1,9 @@
 import { Dayjs } from "dayjs";
 import { By, WebElement } from "selenium-webdriver";
-import { Utils } from "@models/Utils";
-import type { BotClient } from "@models/BotClient";
 import * as scheduler from "node-schedule";
+import type { BotClient } from "@models/BotClient";
+import type { SWSSupervisor } from "@models/SWSSupervisor";
+import { Utils } from "@models/Utils";
 
 export class Lesson {
     startDate: Dayjs;
@@ -134,8 +135,9 @@ export class Lesson {
      * Scheduling to send a message in the correct channel to remind students to sign on SWS
      *
      * @param client
+     * @param swsSupervisor
      */
-    planSWSReminder(client: BotClient) {
+    planSWSReminder(client: BotClient, swsSupervisor?: SWSSupervisor): void {
         scheduler.scheduleJob(
             this.endDate.subtract(15, "minutes").toDate(),
             async () => {
@@ -143,7 +145,11 @@ export class Lesson {
                     .then( channel => {
                         if (!channel?.isText()) return;
 
-                        return channel.send("Le cours se termine dans 15 minutes. Pensez à signer sur SWS !\n*Ce message sera supprimé 5 minutes après la fin du cours.*")
+                        return channel.send({
+                            content: `Le cours se termine dans 15 minutes. Pensez à signer sur SWS ( ${swsSupervisor ? `Le chargé de SWS pour aujourd'hui est <@${swsSupervisor.id}>` : "Impossible de trouver le chargé de SWS pour aujourd'hui"} ) !\n` +
+                                "*Ce message sera supprimé 5 minutes après la fin du cours.*",
+                            allowedMentions: { parse: [] }
+                        })
                             .then( message => {
                                 scheduler.scheduleJob(
                                     this.endDate.add(5, "minutes").toDate(),

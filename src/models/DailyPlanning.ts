@@ -1,4 +1,4 @@
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { Lesson } from "@models/Lesson";
 import { MessageActionRow, MessageButton, MessageEmbed, WebhookEditMessageOptions } from "discord.js";
 import { Utils } from "@models/Utils";
@@ -7,15 +7,18 @@ import webdriver, { By } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 import 'chromedriver';
 import type { BotClient } from "@models/BotClient";
+import type { SWSSupervisor } from "@models/SWSSupervisor";
 
 export class DailyPlanning {
     lessons: Lesson[];
     date: Dayjs;
+    swsSupervisor?: SWSSupervisor;
 
 
-    constructor(lessons: Lesson[], date: Dayjs) {
+    constructor(lessons: Lesson[], date: Dayjs, swsSupervisor?: SWSSupervisor) {
         this.lessons = lessons;
         this.date = date;
+        this.swsSupervisor = swsSupervisor;
     }
 
     /**
@@ -65,8 +68,11 @@ export class DailyPlanning {
         // We close the browser to avoid RAM increasing and memory leaks
         await driver.quit();
 
+        const supervisors: SWSSupervisor[] = require('../data/SWSSupervisors.json');
+        const supervisor = supervisors.find( s => date.isAfter(dayjs(s.begin, "DD/MM/YYYY")) && date.isBefore(dayjs(s.end, "DD/MM/YYYY").add(1, "day")) );
+
         // We return a daily planning object based on previous data
-        return new DailyPlanning(lessonsCode, date);
+        return new DailyPlanning(lessonsCode, date, supervisor);
     }
 
 
@@ -108,7 +114,7 @@ export class DailyPlanning {
      * @param client
      */
     planSWSReminders(client: BotClient) {
-        this.lessons.forEach( lesson => lesson.planSWSReminder(client) );
+        this.lessons.forEach( lesson => lesson.planSWSReminder(client, this.swsSupervisor) );
     }
 
     /**
@@ -131,7 +137,9 @@ export class DailyPlanning {
 
             this.lessons.forEach( (lesson, index) => {
                 embed.setDescription(
-                    (embed.description ?? "\u200b\n") +
+                    "\u200b\n" +
+                    (this.swsSupervisor ? `<@${this.swsSupervisor.id}> est chargé de SWS pour aujourd'hui!` : "*Impossible de déterminer la personne chargée de SWS pour aujourd'hui...*") +
+                    "\n\n" +
                     lesson.toStringEmbed() +
                     (index === this.lessons.length - 1 ? '' : '\n\n')
                 );
