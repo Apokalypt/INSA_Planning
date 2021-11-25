@@ -14,6 +14,10 @@ import pluginTimezone from 'dayjs/plugin/timezone'
 dayjs.extend(pluginTimezone)
 import customParseFormat from "dayjs/plugin/customParseFormat";
 dayjs.extend(customParseFormat);
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+dayjs.extend(isSameOrBefore);
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+dayjs.extend(isSameOrAfter);
 
 dotenv.config()
 

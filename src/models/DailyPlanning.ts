@@ -60,7 +60,7 @@ export class DailyPlanning {
         // If found, we search the <tr> parent to have all information about the daily planning
         const trDay = await thDay.findElement(By.xpath('..'));
         // We convert all <td> into lesson objects
-        const lessonsCode: Lesson[] = await Promise.all(
+        const lessons: Lesson[] = await Promise.all(
             (await trDay.findElements(By.xpath('td[contains(@id,\'slot-\')]')))
                 .map(lessonCode => Lesson.createFromHTMLCode(date, lessonCode))
         );
@@ -69,10 +69,10 @@ export class DailyPlanning {
         await driver.quit();
 
         const supervisors: SWSSupervisor[] = require('../data/SWSSupervisors.json');
-        const supervisor = supervisors.find( s => date.isAfter(dayjs(s.begin, "DD/MM/YYYY")) && date.isBefore(dayjs(s.end, "DD/MM/YYYY").add(1, "day")) );
+        const supervisor = supervisors.find( s => date.isSameOrAfter(dayjs(s.begin, "DD/MM/YYYY"), "days") && date.isSameOrBefore(dayjs(s.end, "DD/MM/YYYY"), "days") );
 
         // We return a daily planning object based on previous data
-        return new DailyPlanning(lessonsCode, date, supervisor);
+        return new DailyPlanning(lessons, date, supervisor);
     }
 
 
@@ -133,16 +133,21 @@ export class DailyPlanning {
             const embed = new MessageEmbed()
                 .setTitle(title)
                 .setColor("YELLOW")
-                .setURL(Constants.PLANNING_URL);
-
-            this.lessons.forEach( (lesson, index) => {
-                embed.setDescription(
+                .setDescription(
                     "\u200b\n" +
                     (this.swsSupervisor ? `<@${this.swsSupervisor.id}> est chargé de SWS pour aujourd'hui!` : "*Impossible de déterminer la personne chargée de SWS pour aujourd'hui...*") +
-                    "\n\n" +
-                    lesson.toStringEmbed() +
-                    (index === this.lessons.length - 1 ? '' : '\n\n')
+                    "\n\n"
+                )
+                .setURL(Constants.PLANNING_URL);
+
+            let lastLesson: Lesson;
+            this.lessons.forEach( lesson => {
+                embed.setDescription(
+                    embed.description +
+                    `${!lastLesson || lastLesson.endDate.isSame(lesson.startDate) ? "\n" : "\n-----\n\n"}` +
+                    lesson.toStringEmbed()
                 );
+                lastLesson = lesson;
             });
 
             return embed;

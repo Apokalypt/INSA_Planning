@@ -40,7 +40,7 @@ export = {
                     });
                 });
         } else {
-            let date = dayjs.tz(dayjs().format("DD/MM/YYYY"), "DD/MM/YYYY", "Europe/Paris");
+            let date = dayjs().tz("Europe/Paris");
 
             const selectOptions: MessageSelectOptionData[] = [];
             while (selectOptions.length < 25) {
