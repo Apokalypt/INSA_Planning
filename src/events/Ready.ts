@@ -19,12 +19,17 @@ export = new Event(
 
             // Retrieve timetable for a specific day
             await DailyPlanning.fetchDailyPlanning(datePlanning)
-                .then( async timetable => {
+                .then( async planning => {
+                    if (planning.lessons.length === 1 && planning.lessons[0].title.match(/Période entreprise ([0-9]+) \(Entreprise \1\)/)) {
+                        // It's an enterprise period, do nothing
+                        return;
+                    }
+
                     // Send a message for each lesson to reminder that we need to sign on SWS
-                    timetable.planSWSReminders(client);
+                    planning.planSWSReminders(client);
 
                     // Send an embed with planning for the next day
-                    await timetable.publish(client);
+                    await planning.publish(client);
                 })
                 .catch(err => {
                     console.error(err);
