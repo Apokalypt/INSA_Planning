@@ -118,6 +118,14 @@ export class DailyPlanning {
     }
 
     /**
+     * Indicate if the daily planning is during an enterprise period.
+     */
+    public isDuringEnterprisePeriod(): boolean {
+        return this.lessons.length === 1
+            && this.lessons[0].title.match(/Période entreprise ([0-9]+) \(Entreprise \1\)/) != null;
+    }
+
+    /**
      * Generate an embed message based on the daily planning
      */
     private _toEmbed(): MessageEmbed {
@@ -135,7 +143,7 @@ export class DailyPlanning {
                 .setColor("YELLOW")
                 .setDescription(
                     "\u200b\n" +
-                    (this.swsSupervisor ? `<@${this.swsSupervisor.id}> est chargé de SWS pour aujourd'hui!` : "*Impossible de déterminer la personne chargée de SWS pour aujourd'hui...*") +
+                    (this.swsSupervisor ? `<@${this.swsSupervisor.id}> est chargé de SWS pour ce jour!` : "*Impossible de déterminer la personne chargée de SWS pour aujourd'hui...*") +
                     "\n\n"
                 )
                 .setURL(Constants.PLANNING_URL);

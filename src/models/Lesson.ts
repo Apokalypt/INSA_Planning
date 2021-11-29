@@ -1,4 +1,4 @@
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { By, WebElement } from "selenium-webdriver";
 import * as scheduler from "node-schedule";
 import type { BotClient } from "@models/BotClient";
@@ -138,6 +138,10 @@ export class Lesson {
      * @param swsSupervisor
      */
     planSWSReminder(client: BotClient, swsSupervisor?: SWSSupervisor): void {
+        if (this.endDate.subtract(15, "minutes").isBefore(dayjs())) {
+           return;
+        }
+
         scheduler.scheduleJob(
             this.endDate.subtract(15, "minutes").toDate(),
             async () => {
