@@ -11,8 +11,8 @@ export = new Event(
 
         // Plan SWS reminders for the current day or next day (depending on which cron job has been executed) if the
         // bot has restart
-        let date = dayjs.tz("Europe/Paris");
-        if (date.isSameOrAfter(dayjs.tz("Europe/Paris").hour(20).minute(0).second(0))) {
+        let date = dayjs().tz("Europe/Paris");
+        if (date.isSameOrAfter(dayjs().tz("Europe/Paris").hour(20).minute(0).second(0))) {
             date = date.add(1, 'day');
         }
         if (![6, 0].includes(date.day())) {
