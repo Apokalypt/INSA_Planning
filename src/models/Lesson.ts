@@ -85,7 +85,7 @@ export class Lesson {
             }
 
             const startHourPlace = await otherData[0].getText(); // Format: HHhMM @ Place
-            const startHourPlaceRegExp = /(?<startHour>[0-2][0-9]:[0-5][0-9]) @ (?<room>.*)/;
+            const startHourPlaceRegExp = /(?<startHour>[0-2][0-9][h:][0-5][0-9]) @ (?<room>.*)/;
             let startHourPlaceData = startHourPlace.match(startHourPlaceRegExp)?.groups;
             if (!startHourPlaceData && !startHourPlace.match(/^[0-2][0-9]h[0-5][0-9]$/)) {
                 throw new Error("Lesson description should have a start hour and a place");
@@ -98,7 +98,7 @@ export class Lesson {
                     descriptionData.type
                 );
             } else {
-                const startHour = startHourPlaceData.startHour;
+                const startHour = startHourPlaceData.startHour.replace(":", "h");
 
                 return new Lesson(
                     date.tz("Europe/Paris").hour(parseInt(startHour.split("h")[0])).minute(parseInt(startHour.split("h")[1])),

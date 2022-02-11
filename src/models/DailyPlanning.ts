@@ -40,7 +40,7 @@ export class DailyPlanning {
         // Load planning URL
         await driver.get(Constants.PLANNING_URL);
 
-        // Check if we need to login to access planning
+        // Check if we need to log in to access planning
         if ((await driver.getCurrentUrl()).includes('/login')) {
             const usernameInput = await driver.findElement(By.id('username'));
             await usernameInput.sendKeys(Constants.LOGIN);
