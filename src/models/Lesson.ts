@@ -31,11 +31,13 @@ export class Lesson {
     findEndDateFromColspan(colspan: number): Dayjs {
         let end = this.startDate;
 
-        while (colspan >= 0) {
+        while (colspan > 0) {
             end = end.add(15, 'minutes');
 
             colspan--;
-            if (end.minute() === 0) colspan--;
+            if (end.minute() === 0) {
+                colspan--;
+            }
         }
 
         return end;
@@ -44,6 +46,7 @@ export class Lesson {
 
     static async createFromHTMLCode(date: Dayjs, element: WebElement) {
         const colspan = parseInt(await element.getAttribute("colspan")); // We used that to determine the duration of the lesson
+
         // We should have 2 tr elements
         const trLessonData = await element.findElements(By.css("tr"));
         if (trLessonData.length !== 2) {

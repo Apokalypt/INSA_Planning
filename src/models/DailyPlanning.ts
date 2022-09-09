@@ -23,9 +23,10 @@ export class DailyPlanning {
 
     /**
      * We construct a daily planning based on the planning found on the website
+     * @param configuration
      * @param date
      */
-    static async fetchDailyPlanning(date: Dayjs): Promise<DailyPlanning> {
+    static async fetchDailyPlanning(configuration: { planning: string, channel: string }, date: Dayjs): Promise<DailyPlanning> {
         let options = new chrome.Options();
         options.setChromeBinaryPath(require('puppeteer').executablePath());
         options.addArguments('--headless');
@@ -38,7 +39,7 @@ export class DailyPlanning {
             .build();
 
         // Load planning URL
-        await driver.get(Constants.PLANNING_URL);
+        await driver.get(configuration.planning);
 
         // Check if we need to log in to access planning
         if ((await driver.getCurrentUrl()).includes('/login')) {
@@ -50,7 +51,7 @@ export class DailyPlanning {
             await driver.findElement(By.name('submit')).click();
 
             // If after the login we are still on the login page, we throw an error
-            if (await driver.getCurrentUrl() !== Constants.PLANNING_URL) {
+            if (await driver.getCurrentUrl() !== configuration.planning) {
                 throw Error('Login failed');
             }
         }
@@ -68,7 +69,12 @@ export class DailyPlanning {
         // We close the browser to avoid RAM increasing and memory leaks
         await driver.quit();
 
-        const supervisors: SWSSupervisor[] = require('../data/SWSSupervisors.json');
+        let supervisors: SWSSupervisor[];
+        try {
+            supervisors = require('../data/SWSSupervisors.json');
+        } catch (e) {
+            supervisors = [];
+        }
         const supervisor = supervisors.find( s => date.isSameOrAfter(dayjs(s.begin, "DD/MM/YYYY"), "days") && date.isSameOrBefore(dayjs(s.end, "DD/MM/YYYY"), "days") );
 
         // We return a daily planning object based on previous data
@@ -79,14 +85,16 @@ export class DailyPlanning {
     /**
      * Generate webhook edit options from the current daily planning
      */
-    toWebhookEditMessageOptions(): WebhookEditMessageOptions {
+    toWebhookEditMessageOptions(configuration: { planning: string, year: number }): WebhookEditMessageOptions {
+        const dateString = this.date.add(this.date.day() === 5 ? 3 : 1, 'day').format('DD/MM/YYYY');
+
         return {
-            embeds: [this._toEmbed()],
+            embeds: [this._toEmbed(configuration.planning)],
             components: [
                 new MessageActionRow()
                     .setComponents(
                         new MessageButton()
-                            .setCustomId(this.date.add(this.date.day() === 5 ? 3 : 1, 'day').format('DD/MM/YYYY'))
+                            .setCustomId(`${dateString}|${configuration.year}`)
                             .setLabel("Voir le planning du jour suivant")
                             .setStyle("PRIMARY")
                             .setEmoji("🗓️")
@@ -99,12 +107,17 @@ export class DailyPlanning {
     /**
      * Publish the daily planning on the dedicated channel
      *
+     * @param configuration
      * @param client
      */
-    async publish(client: BotClient): Promise<void> {
-        return client.channels.fetch(process.env.INSA_PLANNING_CHANNEL_ID ?? "")
+    async publish(configuration: { planning: string, channel: string, year: number }, client: BotClient) {
+        return client.channels.fetch(configuration.channel)
             .then(async channel => {
-                if (channel?.isText()) await channel.send(this.toWebhookEditMessageOptions());
+                if (!channel?.isText()) {
+                    return;
+                }
+
+                return channel.send(this.toWebhookEditMessageOptions(configuration));
             })
     }
 
@@ -122,13 +135,13 @@ export class DailyPlanning {
      */
     public isDuringEnterprisePeriod(): boolean {
         return this.lessons.length === 1
-            && this.lessons[0].title.match(/Période entreprise ([0-9]+) \(Entreprise \1\)/) != null;
+            && this.lessons[0].title.match(/Période entreprise (\d+) \(Entreprise \1\)/) != null;
     }
 
     /**
      * Generate an embed message based on the daily planning
      */
-    private _toEmbed(): MessageEmbed {
+    private _toEmbed(planning: string): MessageEmbed {
         const title = Utils.bold(":calendar:  Emploi du temps du <t:" + this.date.hour(0).minute(0).unix() + ":D> :");
 
         if (this.lessons.length === 0) {
@@ -136,7 +149,7 @@ export class DailyPlanning {
                 .setTitle(title)
                 .setColor("GREEN")
                 .setDescription("Vous n'avez pas de cours programmé pour aujourd'hui. Reposez-vous bien :thumbsup:")
-                .setURL(Constants.PLANNING_URL);
+                .setURL(planning);
         } else {
             const embed = new MessageEmbed()
                 .setTitle(title)
@@ -146,7 +159,7 @@ export class DailyPlanning {
                     (this.swsSupervisor ? `<@${this.swsSupervisor.id}> est chargé de SWS pour ce jour!` : "*Impossible de déterminer la personne chargée de SWS pour aujourd'hui...*") +
                     "\n\n"
                 )
-                .setURL(Constants.PLANNING_URL);
+                .setURL(planning);
 
             let lastLesson: Lesson;
             this.lessons.forEach( lesson => {
