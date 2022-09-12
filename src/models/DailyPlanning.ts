@@ -135,7 +135,11 @@ export class DailyPlanning {
      */
     public isDuringEnterprisePeriod(): boolean {
         return this.lessons.length === 1
-            && this.lessons[0].title.match(/Période entreprise (\d+) \(Entreprise \1\)/) != null;
+            && (
+                this.lessons[0].title.match(/Période entreprise (\d+) \(Entreprise \1\)/) != null
+                ||
+                this.lessons[0].title.match(/Créneau (\d+)IFA \((\d+)IFA Entreprise (\d+) - Promotion IFA (\d+)-(\d+)\)/) != null
+            );
     }
 
     /**

@@ -29,9 +29,9 @@ export = new Event(
         }
         */
 
-        Constants.CONFIGURATIONS.map( conf => {
+        Constants.CONFIGURATIONS.map( (conf, i) => {
             // Plan a cron task to be executed the sunday, monday, tuesday, wednesday and thursday at 20:00 UTC+01:00
-            const cronJob: CronJob = new CronJob("0 19 * * 0,1,2,3,4", async () => {
+            const cronJob: CronJob = new CronJob(i + " 19 * * 0,1,2,3,4", async () => {
                 const datePlanning = dayjs().tz("Europe/Paris").add(1, 'day');
                 if ([6, 0].includes(datePlanning.day())) {
                     // If it's the weekend, do nothing
@@ -57,9 +57,11 @@ export = new Event(
                         return client.channels.fetch("847206243277078529")
                             .then(async channel => {
                                 // Send a message with error message that occurred
-                                if (channel?.isText()) await channel.send({
-                                    content: '<@305940554221355008> Un bug est survenu : \n' + err.message
-                                });
+                                if (channel?.isText()) {
+                                    await channel.send({
+                                        content: '<@305940554221355008> Un bug est survenu : \n' + err.message
+                                    });
+                                }
                             })
                     });
             });
