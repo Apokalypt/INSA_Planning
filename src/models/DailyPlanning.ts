@@ -127,7 +127,7 @@ export class DailyPlanning {
      * @param client
      */
     planSWSReminders(client: BotClient) {
-        this.lessons.forEach( lesson => lesson.planSWSReminder(client, this.swsSupervisor) );
+        // this.lessons.forEach( lesson => lesson.planSWSReminder(client, this.swsSupervisor) );
     }
 
     /**
