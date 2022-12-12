@@ -1,4 +1,5 @@
 import { Event } from '@models/Event'
+import { InteractionService } from "@services/InteractionService";
 
 export = new Event(
     'interactionCommand',
@@ -12,16 +13,7 @@ export = new Event(
                 throw new Error(`Unknown command ${interaction.commandName}...`);
             }
         } catch (e) {
-            console.error(e);
-            const error = e instanceof Error ? e : new Error("Unknown error!");
-
-            if (interaction.deferred) {
-                await interaction.editReply({ content: error.message });
-            } else if (interaction.replied) {
-                await interaction.followUp({ content: error.message, ephemeral: true });
-            } else {
-                await interaction.reply({ content: error.message, ephemeral: true });
-            }
+            InteractionService.getInstance().handleErrorMessage(interaction, e);
         }
     }
 );

@@ -16,6 +16,8 @@
 
     "paths": {
       "@models/*": [ "models/*" ],
+      "@services/*": [ "services/*" ],
+      "@errors/*": [ "errors/*" ],
       "@enums/*": [ "enums/*" ],
       "@constants": [ "Constants" ]
     }
