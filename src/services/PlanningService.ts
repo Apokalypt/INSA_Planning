@@ -101,6 +101,10 @@ export class PlanningService {
                     return page;
                 })
                 .then( page => {
+                    if (this.pages[url]) {
+                        this.pages[url].content.close();
+                    }
+
                     this.pages[url] = { content: page, lastUpdatedAt: dayjs().tz('Europe/Paris') };
                     resolve(this.pages[url]);
                 })
