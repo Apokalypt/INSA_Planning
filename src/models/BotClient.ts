@@ -1,11 +1,11 @@
 import type { ClientOptions } from 'discord.js'
-import { Collection } from 'discord.js'
 import type { BotEvents } from './BotEvents'
-import * as fs from 'fs'
-import { Client } from 'discord.js'
 import type { Event } from './Event'
-import path from 'path'
 import type { InteractionCommandData } from "@models/InteractionCommandData";
+import path from 'path'
+import * as fs from 'fs'
+import { Collection } from 'discord.js'
+import { Client } from 'discord.js'
 
 /**
  * Extension of the djs client to add some data
@@ -47,7 +47,7 @@ export class BotClient extends Client<true> {
      */
     private _registerClientEvents () {
       fs.readdirSync(path.join(__dirname, '..', 'events')).filter(file => file.endsWith('.js') || file.endsWith('.ts')).forEach((file) => {
-        const event: Event<keyof BotEvents> = require(path.join(__dirname, '..', 'events', file))
+        const event: Event<keyof BotEvents> = require(path.join(__dirname, '..', 'events', file));
 
         if (event.once) {
           this.once(event.name, (...args) => event.action(this, ...args));

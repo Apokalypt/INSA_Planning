@@ -4,8 +4,17 @@ export = new Event(
     'interactionCreate',
     false,
     async (client, interaction) => {
-        if (interaction.isCommand()) client.emit('interactionCommand', interaction);
-        if (interaction.isSelectMenu()) client.emit('interactionSelect', interaction);
-        if (interaction.isButton()) client.emit('interactionButton', interaction);
+        if (interaction.isChatInputCommand()) {
+            client.emit('interactionCommand', interaction);
+            return;
+        }
+        if (interaction.isStringSelectMenu()) {
+            client.emit('interactionSelect', interaction);
+            return;
+        }
+        if (interaction.isButton()) {
+            client.emit('interactionButton', interaction);
+            return;
+        }
     }
 );

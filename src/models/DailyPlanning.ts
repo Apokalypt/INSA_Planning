@@ -1,105 +1,40 @@
-import dayjs, { Dayjs } from "dayjs";
-import { Lesson } from "@models/Lesson";
-import { MessageActionRow, MessageButton, MessageEmbed, WebhookEditMessageOptions } from "discord.js";
-import { Utils } from "@models/Utils";
-import { Constants } from "@constants";
-import webdriver, { By } from 'selenium-webdriver';
-import chrome from 'selenium-webdriver/chrome';
-import 'chromedriver';
 import type { BotClient } from "@models/BotClient";
-import type { SWSSupervisor } from "@models/SWSSupervisor";
+import type { Dayjs } from "dayjs";
+import type { Lesson } from "@models/Lesson";
+import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder } from "discord.js";
+import { Utils } from "@models/Utils";
+import { MessageActionRowComponentBuilder } from "@discordjs/builders";
 
 export class DailyPlanning {
     lessons: Lesson[];
     date: Dayjs;
-    swsSupervisor?: SWSSupervisor;
+    lastUpdatedAt: Dayjs;
 
 
-    constructor(lessons: Lesson[], date: Dayjs, swsSupervisor?: SWSSupervisor) {
+    constructor(lessons: Lesson[], date: Dayjs, lastUpdatedAt: Dayjs) {
         this.lessons = lessons;
         this.date = date;
-        this.swsSupervisor = swsSupervisor;
+        this.lastUpdatedAt = lastUpdatedAt;
     }
-
-    /**
-     * We construct a daily planning based on the planning found on the website
-     * @param configuration
-     * @param date
-     */
-    static async fetchDailyPlanning(configuration: { planning: string, channel: string }, date: Dayjs): Promise<DailyPlanning> {
-        let options = new chrome.Options();
-        options.setChromeBinaryPath(require('puppeteer').executablePath());
-        options.addArguments('--headless');
-        options.addArguments('--disable-gpu');
-        options.addArguments('--window-size=1280,960');
-
-        const driver = await new webdriver.Builder()
-            .forBrowser('chrome')
-            .setChromeOptions(options)
-            .build();
-
-        // Load planning URL
-        await driver.get(configuration.planning);
-
-        // Check if we need to log in to access planning
-        if ((await driver.getCurrentUrl()).includes('/login')) {
-            const usernameInput = await driver.findElement(By.id('username'));
-            await usernameInput.sendKeys(Constants.LOGIN);
-            const passwordInput = await driver.findElement(By.id('password'));
-            await passwordInput.sendKeys(Constants.PASSWORD);
-
-            await driver.findElement(By.name('submit')).click();
-
-            // If after the login we are still on the login page, we throw an error
-            if (await driver.getCurrentUrl() !== configuration.planning) {
-                throw Error('Login failed');
-            }
-        }
-
-        // We search a <th> with the date of the planning we want
-        const thDay = await driver.findElement(By.xpath(`//*[text()[contains(.,'${date.format('DD/MM/YYYY')}')]]`));
-        // If found, we search the <tr> parent to have all information about the daily planning
-        const trDay = await thDay.findElement(By.xpath('..'));
-        // We convert all <td> into lesson objects
-        const lessons: Lesson[] = await Promise.all(
-            (await trDay.findElements(By.xpath('td[contains(@id,\'slot-\')]')))
-                .map(lessonCode => Lesson.createFromHTMLCode(date, lessonCode))
-        );
-
-        // We close the browser to avoid RAM increasing and memory leaks
-        await driver.quit();
-
-        let supervisors: SWSSupervisor[];
-        try {
-            supervisors = require('../data/SWSSupervisors.json');
-        } catch (e) {
-            supervisors = [];
-        }
-        const supervisor = supervisors.find( s => date.isSameOrAfter(dayjs(s.begin, "DD/MM/YYYY"), "days") && date.isSameOrBefore(dayjs(s.end, "DD/MM/YYYY"), "days") );
-
-        // We return a daily planning object based on previous data
-        return new DailyPlanning(lessons, date, supervisor);
-    }
-
 
     /**
      * Generate webhook edit options from the current daily planning
      */
-    toWebhookEditMessageOptions(configuration: { planning: string, year: number }): WebhookEditMessageOptions {
+    toWebhookEditMessageOptions(configuration: { planning: string, year: number }): BaseMessageOptions {
         const dateString = this.date.add(this.date.day() === 5 ? 3 : 1, 'day').format('DD/MM/YYYY');
 
         return {
             embeds: [this._toEmbed(configuration.planning)],
             components: [
-                new MessageActionRow()
-                    .setComponents(
-                        new MessageButton()
+                new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
                             .setCustomId(`${dateString}|${configuration.year}`)
                             .setLabel("Voir le planning du jour suivant")
-                            .setStyle("PRIMARY")
+                            .setStyle(ButtonStyle.Primary)
                             .setEmoji("🗓️")
                     )
-            ]
+            ],
         };
     }
 
@@ -113,21 +48,12 @@ export class DailyPlanning {
     async publish(configuration: { planning: string, channel: string, year: number }, client: BotClient) {
         return client.channels.fetch(configuration.channel)
             .then(async channel => {
-                if (!channel?.isText()) {
+                if (!channel?.isTextBased()) {
                     return;
                 }
 
-                return channel.send(this.toWebhookEditMessageOptions(configuration));
+                await channel.send(this.toWebhookEditMessageOptions(configuration));
             })
-    }
-
-    /**
-     * Plan the reminder for each lesson
-     *
-     * @param client
-     */
-    planSWSReminders(client: BotClient) {
-        // this.lessons.forEach( lesson => lesson.planSWSReminder(client, this.swsSupervisor) );
     }
 
     /**
@@ -145,30 +71,26 @@ export class DailyPlanning {
     /**
      * Generate an embed message based on the daily planning
      */
-    private _toEmbed(planning: string): MessageEmbed {
+    private _toEmbed(planning: string): EmbedBuilder {
         const title = Utils.bold(":calendar:  Emploi du temps du <t:" + this.date.hour(0).minute(0).unix() + ":D> :");
+        const embed = new EmbedBuilder()
+            .setTitle(title)
+            .setURL(planning)
+            .setFooter({ text: "Dernière mise à jour : " + this.lastUpdatedAt.format('DD/MM/YYYY HH:mm') });
 
         if (this.lessons.length === 0) {
-            return new MessageEmbed()
-                .setTitle(title)
-                .setColor("GREEN")
-                .setDescription("Vous n'avez pas de cours programmé pour aujourd'hui. Reposez-vous bien :thumbsup:")
-                .setURL(planning);
+            return embed.setColor(Colors.Green)
+                .setDescription("Vous n'avez pas de cours programmé pour aujourd'hui. Reposez-vous bien :thumbsup:");
+        } else if (this.isDuringEnterprisePeriod()) {
+            return embed.setColor(Colors.Blue)
+                .setDescription("Vous êtes en période entreprise. Bon courage :muscle:");
         } else {
-            const embed = new MessageEmbed()
-                .setTitle(title)
-                .setColor("YELLOW")
-                .setDescription(
-                    "\u200b\n" +
-                    (this.swsSupervisor ? `<@${this.swsSupervisor.id}> est chargé de SWS pour ce jour!` : "*Impossible de déterminer la personne chargée de SWS pour aujourd'hui...*") +
-                    "\n\n"
-                )
-                .setURL(planning);
+            embed.setColor(Colors.Yellow);
 
             let lastLesson: Lesson;
             this.lessons.forEach( lesson => {
                 embed.setDescription(
-                    embed.description +
+                    (embed.data.description ?? '') +
                     `${!lastLesson || lastLesson.endDate.isSame(lesson.startDate) ? "\n" : "\n-----\n\n"}` +
                     lesson.toStringEmbed()
                 );

@@ -15,14 +15,14 @@ export class Event<K extends keyof BotEvents> {
      */
     public readonly once: Boolean;
     /**
-     * Coded to be executed once the event is emit
+     * Coded to be executed once the event is emitted
      */
     public readonly action: (client: BotClient, ...args: BotEvents[K]) => void;
 
     /* =============== CONSTRUCTOR ================ */
     public constructor (name: K, once: Boolean, action: (client: BotClient, ...args: BotEvents[K]) => void) {
-      this.name = name
-      this.once = once
+      this.name = name;
+      this.once = once;
       this.action = action
     }
 }

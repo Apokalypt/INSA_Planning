@@ -1,8 +1,11 @@
+import {
+    ChatInputCommandInteraction,
+    ComponentType,
+    SelectMenuComponentOptionData
+} from "discord.js";
 import { SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandStringOption } from "@discordjs/builders";
-import dayjs from "dayjs";
-import type { CommandInteraction } from "discord.js";
-import { DailyPlanning } from "@models/DailyPlanning";
-import { MessageActionRow, MessageSelectMenu, MessageSelectOptionData } from "discord.js";
+import { DateService } from "@services/DateService";
+import { InteractionService } from "@services/InteractionService";
 import { Constants } from "@constants";
 
 const ARGS_NAME_DATE: string = "date";
@@ -12,13 +15,14 @@ export = {
     data: new SlashCommandBuilder()
         .setName("planning")
         .setDescription("Retourne le planning d'une date particulière.")
-        .setDefaultPermission(true)
         .addIntegerOption(
             new SlashCommandIntegerOption()
                 .setName(ARGS_NAME_YEAR)
                 .setDescription("Année d'étude")
-                .addChoice("3IFA", 3)
-                .addChoice("4IFA", 4)
+                .addChoices(
+                    { value: 1, name: "3IFA" },
+                    { value: 2, name: "4IFA" }
+                )
                 .setRequired(true)
         )
         .addStringOption(
@@ -27,60 +31,43 @@ export = {
                 .setDescription("Date du planning que vous voulez (format: DD/MM/YYYY)")
                 .setRequired(false)
         ),
-    execute: async (client, interaction: CommandInteraction) => {
-        const studentYear = interaction.options.getInteger(ARGS_NAME_YEAR, true);
+    execute: async (client, interaction: ChatInputCommandInteraction) => {
+        const studentYear = interaction.options.get(ARGS_NAME_YEAR, true).value as number;
         const configuration = Constants.CONFIGURATIONS.find( c => c.year === studentYear );
         if (!configuration) {
             return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
         }
 
-        const dateString = interaction.options.getString(ARGS_NAME_DATE);
+        const dateService = DateService.getInstance();
 
+        const dateString = interaction.options.get(ARGS_NAME_DATE)?.value as string | undefined;
         if (dateString) {
-            // Control date validity
-            const formats = ["D-M-YYYY", "DD-M-YYYY", "DD-MM-YYYY", "D-MM-YYYY", "D/M/YYYY", "DD/M/YYYY", "D/MM/YYYY", "DD/MM/YYYY"];
-            const date = dayjs(dateString, formats, true);
-            if (!date?.isValid()) {
-                return interaction.reply({ content: "La date est invalide, merci de la saisir au format DD/MM/YYYY ( ex: 19/11/2021 ).", ephemeral: true });
-            }
+            const date = dateService.parse(dateString);
 
-            await interaction.deferReply({ ephemeral: true });
-
-            await DailyPlanning.fetchDailyPlanning(configuration, dayjs.tz(date.format("DD/MM/YYYY"), "DD/MM/YYYY", "Europe/Paris"))
-                .then( async timetable => {
-                    return interaction.editReply(timetable.toWebhookEditMessageOptions(configuration));
-                })
-                .catch( _ => {
-                    return interaction.editReply({
-                        content: `Je n'ai pas trouvé de planning correspondant à la date saisie ( <t:${date.unix()}:D> )`
-                    });
-                });
+            await InteractionService.getInstance().sendTimetableMessage(interaction, date, configuration);
         } else {
-            let date = dayjs().tz("Europe/Paris");
-
-            const selectOptions: MessageSelectOptionData[] = [];
-            while (selectOptions.length < 25) {
-                // Check that the date isn't a Saturday or Sunday
-                if (date.day() !== 0 && date.day() !== 6) {
-                    selectOptions.push({
-                        label: date.toDate().toLocaleDateString("fr-FR", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
-                        value: `${date.format("DD/MM/YYYY")}|${studentYear}`
-                    });
-                }
-                // Increment the date by 1 day
-                date = date.add(1, "day");
-            }
+            const selectOptions: SelectMenuComponentOptionData[] = dateService.generateListDaysWorked(Constants.DISCORD_MAX_NUMBER_OPTIONS_SELECT_MENU)
+                .map( day => {
+                    return {
+                        label: dateService.formatToLocaleFr(day),
+                        value: `${day.format("DD/MM/YYYY")}|${studentYear}`
+                    };
+                });
 
             await interaction.reply({
                 content: "Sélectionnez le jour où vous souhaitez avoir le planning :",
                 components: [
-                    new MessageActionRow()
-                        .setComponents(
-                            new MessageSelectMenu()
-                                .setCustomId("planning-date-select-menu")
-                                .setPlaceholder("Choisissez une date...")
-                                .setOptions(selectOptions)
-                        )
+                    {
+                        type: ComponentType.ActionRow,
+                        components: [
+                            {
+                                type: ComponentType.SelectMenu,
+                                customId: "planning-date-select-menu",
+                                placeholder: "Choisissez une date...",
+                                options: selectOptions
+                            }
+                        ]
+                    }
                 ],
                 ephemeral: true
             });
