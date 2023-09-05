@@ -17,8 +17,8 @@ export = {
                 .setName(ARGS_NAME_YEAR)
                 .setDescription("Année d'étude")
                 .addChoices(
-                    { value: 1, name: "3IFA" },
-                    { value: 2, name: "4IFA" }
+                    { value: 3, name: "3IFA" },
+                    { value: 4, name: "4IFA" }
                 )
                 .setRequired(true)
         )
@@ -29,7 +29,7 @@ export = {
                 .setRequired(false)
         ),
     execute: async (_client, interaction) => {
-        const studentYear = interaction.options.get(ARGS_NAME_YEAR, true).value as number;
+        const studentYear = interaction.options.getInteger(ARGS_NAME_YEAR, true);
         const configuration = Constants.CONFIGURATIONS.find( c => c.year === studentYear );
         if (!configuration) {
             return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration de votre année d'étude." });

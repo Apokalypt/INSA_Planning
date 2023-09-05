@@ -45,5 +45,9 @@ export class DateService {
     public formatToLocaleFr(date: Dayjs): string {
         return date.toDate().toLocaleDateString("fr-FR", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     }
+
+    public getCurrentWeekIndex(): number {
+        return dayjs().tz(Constants.TIMEZONE).week()
+    }
 }
 

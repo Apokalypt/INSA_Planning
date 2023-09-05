@@ -3,9 +3,11 @@ import type { Browser, Page } from "puppeteer";
 import puppeteer from "puppeteer";
 import dayjs from "dayjs";
 import { PlanningPage } from "@models/PlanningPage";
+import { Configuration } from "@models/Configuration";
 import { DailyPlanning } from "@models/DailyPlanning";
 import { LessonService } from "@services/LessonService";
 import { Constants } from "@constants";
+import { NoWeekPlanningError } from "@errors/NoWeekPlanningError";
 import { NoDailyPlanningError } from "@errors/NoDailyPlanningError";
 
 export class PlanningService {
@@ -100,9 +102,12 @@ export class PlanningService {
                     await this._handleAuthentication(page, url);
                     return page;
                 })
-                .then( page => {
+                .then( async page => {
+                    // Only useful if we want to make screenshot of the page
+                    await page.setViewport({ width: 1920, height: 1080 });
+
                     if (this.pages[url]) {
-                        this.pages[url].content.close();
+                        await this.pages[url].content.close();
                     }
 
                     this.pages[url] = { content: page, lastUpdatedAt: dayjs().tz(Constants.TIMEZONE) };
@@ -135,5 +140,32 @@ export class PlanningService {
         }
 
         return Promise.resolve(page);
+    }
+
+    public async getBufferOfScreenPlanningOfTheWeek(configuration: Configuration, weekIndex: number): Promise<Buffer> {
+        await this._isReady();
+
+        const page = await this._loadPlanningPage(configuration.planning);
+
+        // Scroll to h2 with id "EdT-S<currentWeekIndex>"
+        const element = await page.content.$(`#EdT-S${weekIndex}`)
+        if (!element) {
+            throw new NoWeekPlanningError(weekIndex);
+        }
+
+        // Get next element after h2, it should be the table of the planning
+        const tableElement = await element.$('xpath/following-sibling::*[1]');
+        if (!tableElement) {
+            throw new NoWeekPlanningError(weekIndex);
+        }
+
+        // Screenshots the table and return the buffer
+        const res = await tableElement.screenshot({ type: 'png' });
+        if (typeof res === 'string') {
+            // Should never occur, I don't even know how we can get a string here...
+            return Buffer.from(res, 'base64');
+        } else {
+            return res;
+        }
     }
 }
