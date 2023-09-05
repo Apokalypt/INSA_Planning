@@ -105,7 +105,7 @@ export class PlanningService {
                         this.pages[url].content.close();
                     }
 
-                    this.pages[url] = { content: page, lastUpdatedAt: dayjs().tz('Europe/Paris') };
+                    this.pages[url] = { content: page, lastUpdatedAt: dayjs().tz(Constants.TIMEZONE) };
                     resolve(this.pages[url]);
                 })
                 .catch( error => {

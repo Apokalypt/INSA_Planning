@@ -13,7 +13,7 @@ export = new Event(
             return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
         }
 
-        const date = dayjs.tz(dateString, "DD/MM/YYYY", "Europe/Paris");
+        const date = dayjs.tz(dateString, "DD/MM/YYYY", Constants.TIMEZONE);
 
         await InteractionService.getInstance().sendTimetableMessage(interaction, date, configuration)
             .catch( e => InteractionService.getInstance().handleErrorMessage(interaction, e) )
