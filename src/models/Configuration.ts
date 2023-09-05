@@ -6,5 +6,8 @@ export interface Configuration {
     planning: string;
     channel: Snowflake;
     name: string;
-    cron?: CronJob;
+    cron: {
+        daily?: CronJob;
+        weekly?: CronJob;
+    }
 }

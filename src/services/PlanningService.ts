@@ -142,7 +142,7 @@ export class PlanningService {
         return Promise.resolve(page);
     }
 
-    public async getBufferOfScreenPlanningOfTheWeek(configuration: Configuration, weekIndex: number): Promise<Buffer> {
+    public async getBufferOfScreenWeeklyPlanning(configuration: Configuration, weekIndex: number): Promise<Buffer> {
         await this._isReady();
 
         const page = await this._loadPlanningPage(configuration.planning);

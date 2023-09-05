@@ -32,7 +32,7 @@ export = {
         await interaction.deferReply({ ephemeral: true });
 
         const currentWeekIndex = DateService.getInstance().getCurrentWeekIndex();
-        const buffer = await PlanningService.getInstance().getBufferOfScreenPlanningOfTheWeek(configuration, currentWeekIndex);
+        const buffer = await PlanningService.getInstance().getBufferOfScreenWeeklyPlanning(configuration, currentWeekIndex);
 
         const attachmentPlanning = new AttachmentBuilder(buffer, { name: "planning.png" })
         await InteractionService.getInstance()

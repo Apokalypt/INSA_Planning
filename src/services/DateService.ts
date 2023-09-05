@@ -49,5 +49,8 @@ export class DateService {
     public getCurrentWeekIndex(): number {
         return dayjs().tz(Constants.TIMEZONE).week()
     }
+    public getNextWeekIndex(): number {
+        return dayjs().tz(Constants.TIMEZONE).add(1, 'week').week()
+    }
 }
 

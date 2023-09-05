@@ -1,5 +1,6 @@
-import { CronJob } from 'cron';
 import dayjs from "dayjs";
+import { CronJob } from 'cron';
+import { AttachmentBuilder } from "discord.js";
 import { Event } from '@models/Event'
 import { DateService } from "@services/DateService";
 import { PlanningService } from "@services/PlanningService";
@@ -12,10 +13,9 @@ export = new Event(
         console.info('[INFO] Connected to Discord\'s server');
 
         Constants.CONFIGURATIONS.map( (conf, i) => {
-            conf.cron?.stop();
-
             // Plan a cron task to be executed the sunday, monday, tuesday, wednesday and thursday at 20:00 Europe/Paris
-            conf.cron = new CronJob(i + " 20 * * 0,1,2,3,4", async () => {
+            conf.cron.daily?.stop();
+            conf.cron.daily = new CronJob(i + " 20 * * 0,1,2,3,4", async () => {
                 const datePlanning = dayjs().tz(Constants.TIMEZONE).add(1, 'day');
                 if (!DateService.getInstance().isWorkDay(datePlanning)) {
                     // If it's the weekend, do nothing
@@ -44,6 +44,21 @@ export = new Event(
                             content: `Une erreur est survenue lors de l'envoi du planning des "${conf.name}": ${err.message}`
                         });
                     });
+            }, undefined, true, Constants.TIMEZONE, undefined, false);
+
+            // Plan a cron task to be executed the saturday at 20:00 Europe/Paris
+            conf.cron.weekly?.stop();
+            conf.cron.weekly = new CronJob(i + " 20 * * 6", async () => {
+                const channel = await client.channels.fetch(conf.channel);
+                if (!channel?.isTextBased()) {
+                    return;
+                }
+
+                const nextWeekIndex = DateService.getInstance().getNextWeekIndex();
+                const buffer = await PlanningService.getInstance().getBufferOfScreenWeeklyPlanning(conf, nextWeekIndex);
+
+                const planningAttachment = new AttachmentBuilder(buffer, { name: `planning-${conf.name}-${nextWeekIndex}.png` });
+                await channel.send({ content: `# [${conf.name}] Planning semaine ${nextWeekIndex}`, files: [planningAttachment] });
             }, undefined, true, Constants.TIMEZONE, undefined, false);
         });
 
