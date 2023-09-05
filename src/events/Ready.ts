@@ -11,10 +11,12 @@ export = new Event(
     async (client) => {
         console.info('[INFO] Connected to Discord\'s server');
 
-        Constants.CONFIGURATIONS.map( (conf, i) => {
-            // Plan a cron task to be executed the sunday, monday, tuesday, wednesday and thursday at 20:00 UTC+01:00
-            const cronJob: CronJob = new CronJob(i + " 19 * * 0,1,2,3,4", async () => {
-                const datePlanning = dayjs().tz("Europe/Paris").add(1, 'day');
+        Constants.CONFIGURATIONS.map( conf => {
+            conf.cron?.stop();
+
+            // Plan a cron task to be executed the sunday, monday, tuesday, wednesday and thursday at 20:00 Europe/Paris
+            conf.cron = new CronJob("0 20 * * 0,1,2,3,4", async () => {
+                const datePlanning = dayjs().tz(Constants.TIMEZONE);
                 if (!DateService.getInstance().isWorkDay(datePlanning)) {
                     // If it's the weekend, do nothing
                     return;
@@ -42,12 +44,7 @@ export = new Event(
                             content: `Une erreur est survenue lors de l'envoi du planning des "${conf.name}": ${err.message}`
                         });
                     });
-            });
-
-            // Start job
-            if (!cronJob.running) {
-                cronJob.start();
-            }
+            }, undefined, true, Constants.TIMEZONE, undefined, false);
         });
 
         console.info('[INFO] Ready to be used');

@@ -1,4 +1,5 @@
 import dayjs, { Dayjs } from "dayjs";
+import { Constants } from "@constants";
 import { InvalidStringDateError } from "@errors/InvalidStringDateError";
 
 export class DateService {
@@ -27,7 +28,7 @@ export class DateService {
     }
 
     public generateListDaysWorked(count: number): Dayjs[] {
-        let date = dayjs().tz("Europe/Paris");
+        let date = dayjs().tz(Constants.TIMEZONE);
 
         const daysWorked: Dayjs[] = [];
         while (daysWorked.length < count) {

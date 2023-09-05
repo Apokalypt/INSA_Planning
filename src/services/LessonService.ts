@@ -67,7 +67,7 @@ export class LessonService {
         }
 
         const [hour, minutes] = startTime.split(startTime[2]).map(Number);
-        const start = date.tz("Europe/Paris").hour(hour).minute(minutes);
+        const start = date.tz(Constants.TIMEZONE).hour(hour).minute(minutes);
         return new Lesson(
             start,
             this._findEndDateFromColspan(

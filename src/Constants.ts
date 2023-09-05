@@ -16,6 +16,7 @@ export abstract class Constants {
     static readonly PASSWORD = process.env.INSA_PLANNING_PASSWORD ?? "";
 
     // AGENDA CONFIGURATIONS
+    static readonly TIMEZONE = "Europe/Paris";
     static readonly CONFIGURATIONS: Configuration[] = [
         {
             year: 3,
