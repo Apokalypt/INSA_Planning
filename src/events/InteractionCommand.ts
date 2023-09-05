@@ -13,7 +13,8 @@ export = new Event(
                 throw new Error(`Unknown command ${interaction.commandName}...`);
             }
         } catch (e) {
-            InteractionService.getInstance().handleErrorMessage(interaction, e);
+            await InteractionService.getInstance().handleErrorMessage(interaction, e)
+                .catch( console.error );
         }
     }
 );

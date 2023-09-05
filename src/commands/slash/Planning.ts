@@ -1,8 +1,5 @@
-import {
-    ChatInputCommandInteraction,
-    ComponentType,
-    SelectMenuComponentOptionData
-} from "discord.js";
+import type { SlashCommandModel } from "@models/SlashCommandModel";
+import { ComponentType, SelectMenuComponentOptionData } from "discord.js";
 import { SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandStringOption } from "@discordjs/builders";
 import { DateService } from "@services/DateService";
 import { InteractionService } from "@services/InteractionService";
@@ -14,7 +11,7 @@ const ARGS_NAME_YEAR: string = "année-étude";
 export = {
     data: new SlashCommandBuilder()
         .setName("planning")
-        .setDescription("Retourne le planning d'une date particulière.")
+        .setDescription("Affiche le planning d'une date donnée.")
         .addIntegerOption(
             new SlashCommandIntegerOption()
                 .setName(ARGS_NAME_YEAR)
@@ -28,23 +25,24 @@ export = {
         .addStringOption(
             new SlashCommandStringOption()
                 .setName(ARGS_NAME_DATE)
-                .setDescription("Date du planning que vous voulez (format: DD/MM/YYYY)")
+                .setDescription("Date du planning que vous souhaitez consulter (format: DD/MM/YYYY)")
                 .setRequired(false)
         ),
-    execute: async (client, interaction: ChatInputCommandInteraction) => {
+    execute: async (_client, interaction) => {
         const studentYear = interaction.options.get(ARGS_NAME_YEAR, true).value as number;
         const configuration = Constants.CONFIGURATIONS.find( c => c.year === studentYear );
         if (!configuration) {
-            return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+            return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration de votre année d'étude." });
         }
 
         const dateService = DateService.getInstance();
+        const interactionService = InteractionService.getInstance();
 
-        const dateString = interaction.options.get(ARGS_NAME_DATE)?.value as string | undefined;
+        const dateString = interaction.options.getString(ARGS_NAME_DATE);
         if (dateString) {
             const date = dateService.parse(dateString);
 
-            await InteractionService.getInstance().sendTimetableMessage(interaction, date, configuration);
+            await interactionService.sendTimetableMessage(interaction, date, configuration);
         } else {
             const selectOptions: SelectMenuComponentOptionData[] = dateService.generateListDaysWorked(Constants.DISCORD_MAX_NUMBER_OPTIONS_SELECT_MENU)
                 .map( day => {
@@ -54,16 +52,16 @@ export = {
                     };
                 });
 
-            await interaction.reply({
+            await interactionService.sendReplyMessage(interaction, {
                 content: "Sélectionnez le jour où vous souhaitez avoir le planning :",
                 components: [
                     {
                         type: ComponentType.ActionRow,
                         components: [
                             {
-                                type: ComponentType.SelectMenu,
+                                type: ComponentType.StringSelect,
                                 customId: "planning-date-select-menu",
-                                placeholder: "Choisissez une date...",
+                                placeholder: "Cliquez ici pour choisir une date...",
                                 options: selectOptions
                             }
                         ]
@@ -73,4 +71,4 @@ export = {
             });
         }
     }
-}
+} satisfies SlashCommandModel;

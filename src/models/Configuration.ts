@@ -4,4 +4,5 @@ export interface Configuration {
     year: number;
     planning: string;
     channel: Snowflake;
+    name: string;
 }

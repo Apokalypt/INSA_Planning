@@ -1,7 +1,7 @@
 import type { Dayjs } from "dayjs";
-import type { RepliableInteraction } from "discord.js";
+import type { RepliableInteraction, InteractionReplyOptions } from "discord.js";
+import type { Configuration } from "@models/Configuration";
 import { PlanningService } from "@services/PlanningService";
-import { Configuration } from "@models/Configuration";
 import { CustomError } from "@errors/CustomError";
 
 export class InteractionService {
@@ -17,10 +17,10 @@ export class InteractionService {
 
     public async sendTimetableMessage(interaction: RepliableInteraction, date: Dayjs, configuration: Configuration) {
         if (!interaction.deferred && !interaction.replied) {
-            await interaction.deferReply({ ephemeral: true });
+            return interaction.deferReply({ ephemeral: true });
         }
 
-        await PlanningService.getInstance().getDailyPlanning(configuration.planning, date)
+        return PlanningService.getInstance().getDailyPlanning(configuration.planning, date)
             .then( async timetable => {
                 return interaction.editReply(timetable.toWebhookEditMessageOptions(configuration));
             })
@@ -33,6 +33,13 @@ export class InteractionService {
                 }
             });
     }
+    public async sendReplyMessage(interaction: RepliableInteraction, payload: InteractionReplyOptions) {
+        if (interaction.deferred) {
+            return interaction.editReply(payload);
+        } else {
+            return interaction.reply(payload);
+        }
+    }
 
     public async handleErrorMessage(interaction: RepliableInteraction, e: any) {
         if (!(e instanceof CustomError)) {
@@ -41,9 +48,9 @@ export class InteractionService {
         const error = e instanceof CustomError ? e : new CustomError("Unknown error!");
 
         if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({ content: error.message }).catch(console.error);
+            return interaction.editReply({ content: error.message }).catch(console.error);
         } else {
-            await interaction.reply({ content: error.message, ephemeral: true }).catch(console.error);
+            return interaction.reply({ content: error.message, ephemeral: true }).catch(console.error);
         }
     }
 }
