@@ -28,22 +28,19 @@ export = new Event(
                         }
 
                         // Send an embed with planning for the next day
-                        await planning.publish(conf, client);
+                        return planning.publish(conf, client);
                     })
-                    .catch(err => {
+                    .catch( async err => {
                         console.error(err);
 
-                        return client.channels.fetch("847206243277078529")
-                            .then(async channel => {
-                                if (!channel?.isTextBased()) {
-                                    return
-                                }
+                        const channel = await client.channels.fetch(Constants.DISCORD_CHANNEL_ID_ON_ERROR);
+                        if (!channel?.isTextBased()) {
+                            return;
+                        }
 
-                                await channel.send({
-                                    content: '<@305940554221355008> Un bug est survenu : \n' +
-                                        err.message
-                                });
-                            })
+                        return channel.send({
+                            content: `Une erreur est survenue lors de l'envoi du planning des "${conf.name}": ${err.message}`
+                        });
                     });
             });
 

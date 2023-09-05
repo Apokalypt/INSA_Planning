@@ -16,6 +16,7 @@ export = new Event(
         const date = dayjs.tz(dateString, "DD/MM/YYYY", "Europe/Paris");
 
         await InteractionService.getInstance().sendTimetableMessage(interaction, date, configuration)
-            .catch( e => InteractionService.getInstance().handleErrorMessage(interaction, e) );
+            .catch( e => InteractionService.getInstance().handleErrorMessage(interaction, e) )
+            .catch( console.error );
     }
 );
