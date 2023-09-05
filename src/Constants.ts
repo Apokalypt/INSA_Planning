@@ -8,7 +8,8 @@ export abstract class Constants {
     static readonly DISCORD_BOT_INTENTS = [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.GuildMessages
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
     ];
 
     // USER INFORMATION
