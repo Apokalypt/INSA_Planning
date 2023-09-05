@@ -91,7 +91,7 @@ export class DailyPlanning {
             this.lessons.forEach( lesson => {
                 embed.setDescription(
                     (embed.data.description ?? '') +
-                    `${!lastLesson || lastLesson.endDate.isSame(lesson.startDate) ? "\n" : "\n-----\n\n"}` +
+                    `${!lastLesson || lastLesson.endDate.isSame(lesson.startDate) ? "\n" : "\n\n-----\n\n"}` +
                     lesson.toStringEmbed()
                 );
                 lastLesson = lesson;
