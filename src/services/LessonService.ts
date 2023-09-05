@@ -63,7 +63,13 @@ export class LessonService {
             }
 
             startTime = startGroups.startHour;
-            place = startGroups.place ?? `${startGroups.room} | Département INFO ( Bât. Blaise Pascal )`;
+            if (startGroups.place) {
+                place = startGroups.place;
+            } else if (startGroups.room) {
+                place = `${startGroups.room} | Département INFO ( Bât. Blaise Pascal )`;
+            } else {
+                place = 'Département INFO ( Bât. Blaise Pascal )';
+            }
         }
 
         const [hour, minutes] = startTime.split(startTime[2]).map(Number);
@@ -74,7 +80,7 @@ export class LessonService {
                 start,
                 Number(await HtmlService.getInstance().getAttributeValue(element, 'colspan'))
             ),
-            teacher,
+            teacher.trim(),
             descriptionGroups.name,
             descriptionGroups.type,
             place

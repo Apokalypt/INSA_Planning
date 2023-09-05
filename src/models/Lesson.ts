@@ -31,9 +31,15 @@ export class Lesson {
     }
 
     toStringEmbed(): string {
-        return `${this.getEmojiTime()}  <t:${this.startDate.unix()}:t> - <t:${this.endDate.unix()}:t>` + "\n" +
-            `${Utils.getEmojiFromLessonType(this.type)}  **${this.type}**  |  ${this.title}` + "\n" +
-            `:school:  ${this.place ?? ""}` + "\n" +
-            `:teacher:  ${this.teacher}` + "\n";
+        let str = `${this.getEmojiTime()}  <t:${this.startDate.unix()}:t> - <t:${this.endDate.unix()}:t>\n` +
+            `${Utils.getEmojiFromLessonType(this.type)}  **${this.type}**  |  ${this.title}`;
+        if (this.place) {
+            str += `\n:school:  ${this.place}`;
+        }
+        if (this.teacher) {
+            str += `\n:teacher:  ${this.teacher}`;
+        }
+
+        return str;
     }
 }
