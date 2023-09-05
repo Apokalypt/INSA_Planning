@@ -22,7 +22,7 @@ export class PlanningService {
         this._pendingPages = { };
 
         this._isReadyPromise = new Promise<void>((resolve, reject) => {
-            puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] })
+            puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] })
                 .then( browser => {
                     this._puppeteerBrowser = browser;
                     resolve();
