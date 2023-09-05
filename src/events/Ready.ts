@@ -11,12 +11,12 @@ export = new Event(
     async (client) => {
         console.info('[INFO] Connected to Discord\'s server');
 
-        Constants.CONFIGURATIONS.map( conf => {
+        Constants.CONFIGURATIONS.map( (conf, i) => {
             conf.cron?.stop();
 
             // Plan a cron task to be executed the sunday, monday, tuesday, wednesday and thursday at 20:00 Europe/Paris
-            conf.cron = new CronJob("0 20 * * 0,1,2,3,4", async () => {
-                const datePlanning = dayjs().tz(Constants.TIMEZONE);
+            conf.cron = new CronJob(i + " 20 * * 0,1,2,3,4", async () => {
+                const datePlanning = dayjs().tz(Constants.TIMEZONE).add(1, 'day');
                 if (!DateService.getInstance().isWorkDay(datePlanning)) {
                     // If it's the weekend, do nothing
                     return;
