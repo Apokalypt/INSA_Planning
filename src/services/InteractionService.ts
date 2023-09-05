@@ -17,7 +17,7 @@ export class InteractionService {
 
     public async sendTimetableMessage(interaction: RepliableInteraction, date: Dayjs, configuration: Configuration) {
         if (!interaction.deferred && !interaction.replied) {
-            return interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ ephemeral: true });
         }
 
         return PlanningService.getInstance().getDailyPlanning(configuration.planning, date)
