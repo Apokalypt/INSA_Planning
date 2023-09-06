@@ -6,8 +6,9 @@ import { Constants } from "@constants";
 export = new Event(
     'interactionSelect',
     false,
-    async (client, interaction) => {
-        switch (interaction.customId) {
+    async (_client, interaction) => {
+        try {
+            switch (interaction.customId) {
             case 'planning-date-select-menu':
                 const [dateString, year] = interaction.values[0].split('|');
                 const configuration = Constants.CONFIGURATIONS.find( c => c.year === Number(year) );
@@ -21,12 +22,19 @@ export = new Event(
                     .catch( e => InteractionService.getInstance().handleErrorMessage(interaction, e) );
                 break;
             default:
-                await interaction.reply({
-                    content: "Impossible de déterminer l'action à réaliser...",
-                    ephemeral: true
-                });
+                await InteractionService.getInstance().sendReplyMessage(
+                    interaction,
+                    {
+                        content: "Impossible de déterminer l'action à réaliser...",
+                        ephemeral: true
+                    }
+                )
 
                 break;
+            }
+        } catch (e) {
+            await InteractionService.getInstance().handleErrorMessage(interaction, e)
+                .catch( console.error );
         }
     }
 );

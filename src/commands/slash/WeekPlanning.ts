@@ -1,8 +1,6 @@
 import type { SlashCommandModel } from "@models/SlashCommandModel";
-import { AttachmentBuilder } from "discord.js";
 import { SlashCommandBuilder, SlashCommandIntegerOption } from "@discordjs/builders";
 import { DateService } from "@services/DateService";
-import { PlanningService } from "@services/PlanningService";
 import { InteractionService } from "@services/InteractionService";
 import { Constants } from "@constants";
 
@@ -29,13 +27,7 @@ export = {
             return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration de votre année d'étude." });
         }
 
-        await interaction.deferReply({ ephemeral: true });
-
-        const currentWeekIndex = DateService.getInstance().getCurrentWeekIndex();
-        const buffer = await PlanningService.getInstance().getBufferOfScreenWeeklyPlanning(configuration, currentWeekIndex);
-
-        const attachmentPlanning = new AttachmentBuilder(buffer, { name: "planning.png" })
         await InteractionService.getInstance()
-            .sendReplyMessage(interaction, { files: [attachmentPlanning], ephemeral: true });
+            .sendWeeklyPlanningMessage(interaction, configuration, DateService.getInstance().getCurrentWeekIndex());
     }
 } satisfies SlashCommandModel;

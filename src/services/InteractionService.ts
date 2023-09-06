@@ -1,6 +1,9 @@
 import type { Dayjs } from "dayjs";
-import type { RepliableInteraction, InteractionReplyOptions } from "discord.js";
+import type { InteractionReplyOptions, RepliableInteraction } from "discord.js";
 import type { Configuration } from "@models/Configuration";
+import { MessageActionRowComponentBuilder } from "@discordjs/builders";
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { DateService } from "@services/DateService";
 import { PlanningService } from "@services/PlanningService";
 import { CustomError } from "@errors/CustomError";
 
@@ -33,6 +36,32 @@ export class InteractionService {
                 }
             });
     }
+
+    public async sendWeeklyPlanningMessage(interaction: RepliableInteraction, configuration: Configuration, weekIndex: number) {
+        if (!interaction.deferred && !interaction.replied) {
+            await interaction.deferReply({ ephemeral: true });
+        }
+
+        const buffer = await PlanningService.getInstance().getBufferOfScreenWeeklyPlanning(configuration, weekIndex);
+        const attachmentPlanning = new AttachmentBuilder(buffer, { name: "planning.png" })
+
+        await this.sendReplyMessage(
+            interaction,
+            {
+                files: [attachmentPlanning],
+                components: [
+                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
+                        .addComponents(
+                            this.getWeeklyPlanningButtonComponent("Précédent", configuration.year, DateService.getInstance().getPreviousWeekIndex(weekIndex)),
+                            this.getRefreshWeeklyPlanningButtonComponent(configuration.year, weekIndex),
+                            this.getWeeklyPlanningButtonComponent("Suivant", configuration.year, DateService.getInstance().getNextWeekIndex(weekIndex))
+                        )
+                ],
+                ephemeral: true
+            }
+        );
+    }
+
     public async sendReplyMessage(interaction: RepliableInteraction, payload: InteractionReplyOptions) {
         if (interaction.deferred) {
             return interaction.editReply(payload);
@@ -52,6 +81,20 @@ export class InteractionService {
         } else {
             return interaction.reply({ content: error.message, ephemeral: true }).catch(console.error);
         }
+    }
+
+    public getWeeklyPlanningButtonComponent(str: string, year: number, weekIndex: number) {
+        return new ButtonBuilder()
+            .setCustomId(`week-planning-${year}-${weekIndex}`)
+            .setLabel(str)
+            .setStyle(ButtonStyle.Primary);
+    }
+    public getRefreshWeeklyPlanningButtonComponent(year: number, weekIndex: number) {
+        return new ButtonBuilder()
+            .setCustomId(`week-planning-${year}-${weekIndex}`)
+            .setLabel("\u200b")
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(true);
     }
 }
 
