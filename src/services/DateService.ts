@@ -45,5 +45,25 @@ export class DateService {
     public formatToLocaleFr(date: Dayjs): string {
         return date.toDate().toLocaleDateString("fr-FR", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
     }
+
+    public getPreviousWeekIndex(referenceWeekIndex?: number): number {
+        const date = dayjs().tz(Constants.TIMEZONE);
+        if (referenceWeekIndex === undefined) {
+            return date.subtract(1, 'week').week()
+        } else {
+            return date.week(referenceWeekIndex).subtract(1, 'week').week()
+        }
+    }
+    public getCurrentWeekIndex(): number {
+        return dayjs().tz(Constants.TIMEZONE).week()
+    }
+    public getNextWeekIndex(referenceWeekIndex?: number): number {
+        const date = dayjs().tz(Constants.TIMEZONE);
+        if (referenceWeekIndex === undefined) {
+            return date.add(1, 'week').week()
+        } else {
+            return date.week(referenceWeekIndex).add(1, 'week').week()
+        }
+    }
 }
 

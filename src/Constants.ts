@@ -23,13 +23,15 @@ export abstract class Constants {
             year: 3,
             planning: "https://servif-cocktail.insa-lyon.fr/EdT/3IFA.php",
             channel: "1143301054625226813",
-            name: "3IFA"
+            name: "3IFA",
+            cron: { }
         },
         {
             year: 4,
             planning: "https://servif-cocktail.insa-lyon.fr/EdT/4IFA.php",
             channel: "885433068511428648",
-            name: "4IFA"
+            name: "4IFA",
+            cron: { }
         }
     ];
 
