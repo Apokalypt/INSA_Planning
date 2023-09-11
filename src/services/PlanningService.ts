@@ -9,54 +9,40 @@ import { LessonService } from "@services/LessonService";
 import { Constants } from "@constants";
 import { NoWeekPlanningError } from "@errors/NoWeekPlanningError";
 import { NoDailyPlanningError } from "@errors/NoDailyPlanningError";
+import { ApplicationNotReadyError } from "@errors/ApplicationNotReadyError";
 
-export class PlanningService {
-    public readonly pages: { [key: string]: PlanningPage };
+export class PlanningService<IsReady extends boolean = false> {
+    public readonly cache: { [key: string]: PlanningPage };
 
-    private _isReadyPromise: Promise<any> | null = null;
-    private _puppeteerBrowser!: Browser;
+    private _puppeteerBrowser!: IsReady extends true ? Browser : (Browser | undefined);
     private readonly _pendingPages: { [key: string]: Promise<PlanningPage> };
 
     private static _instance?: PlanningService;
 
     private constructor() {
-        this.pages = { };
+        this.cache = { };
         this._pendingPages = { };
 
-        this._isReadyPromise = new Promise<void>((resolve, reject) => {
-            puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] })
-                .then( browser => {
-                    this._puppeteerBrowser = browser;
-                    resolve();
-                    this._isReadyPromise = null;
-                })
-                .catch( error => {
-                    console.error(error);
-                    reject(error);
-                });
-        });
+        this._tryInitialize();
 
         setInterval( () => {
-            for (const url in this.pages) {
+            if (!this._isReady()) {
+                return;
+            }
+
+            for (const url in this.cache) {
                 this._refreshPlanningPage(url)
                     .catch( console.error );
             }
         }, 15 * 60 * 1000);
     }
 
-
-    public static getInstance(): PlanningService {
-        if (!this._instance) {
-            this._instance = new PlanningService();
+    public async getDailyPlanning(url: string, date: Dayjs): Promise<DailyPlanning> {
+        if (!this._isReady()) {
+            throw new ApplicationNotReadyError();
         }
 
-        return this._instance;
-    }
-
-    public async getDailyPlanning(url: string, date: Dayjs): Promise<DailyPlanning> {
-        await this._isReady();
-
-        const page = await this._loadPlanningPage(url);
+        const page = await this._getPlanningPage(url);
 
         // We search a <th> with the date of the planning we want
         const thDay = (await page.content.$x(`//*[text()[contains(.,'${date.format('DD/MM/YYYY')}')]]`))[0];
@@ -71,84 +57,15 @@ export class PlanningService {
         return new DailyPlanning(lessons, date, page.lastUpdatedAt);
     }
 
-    private async _isReady(): Promise<void> {
-        if (this._isReadyPromise) {
-            return this._isReadyPromise;
-        }
-
-        return Promise.resolve();
-    }
-
-    private async _refreshPlanningPage(url: string): Promise<PlanningPage> {
-        return this._loadPlanningPage(url, true);
-    }
-
-    private async _loadPlanningPage(url: string, force?: boolean): Promise<PlanningPage> {
-        if (this._pendingPages[url] != null) {
-            await this._pendingPages[url];
-        }
-
-        if (this.pages[url] && !force) {
-            return this.pages[url];
-        }
-
-        this._pendingPages[url] = new Promise<PlanningPage>((resolve, reject) => {
-            this._puppeteerBrowser.newPage()
-                .then( async page => {
-                    await page.goto(url, { waitUntil: 'load' });
-                    return page;
-                })
-                .then( async page => {
-                    await this._handleAuthentication(page, url);
-                    return page;
-                })
-                .then( async page => {
-                    // Only useful if we want to make screenshot of the page
-                    await page.setViewport({ width: 1920, height: 1080 });
-
-                    if (this.pages[url]) {
-                        await this.pages[url].content.close();
-                    }
-
-                    this.pages[url] = { content: page, lastUpdatedAt: dayjs().tz(Constants.TIMEZONE) };
-                    resolve(this.pages[url]);
-                })
-                .catch( error => {
-                    console.error(error);
-                    reject(error);
-                })
-        });
-
-        const page = await this._pendingPages[url];
-        delete this._pendingPages[url];
-        return page;
-    }
-
-    private async _handleAuthentication(page: Page, url: string): Promise<Page> {
-        if (page.url().startsWith('https://login')) {
-            await page.type('#username', Constants.LOGIN, { delay: 100 });
-            await page.type('#password', Constants.PASSWORD, { delay: 100 });
-
-            await Promise.all([
-                page.waitForNavigation({ waitUntil: 'networkidle0' }),
-                page.click('input[type=submit]'),
-            ]);
-
-            if (page.url() !== url) {
-                throw Error('An unexpected error occurred during the authentication.');
-            }
-        }
-
-        return Promise.resolve(page);
-    }
-
     public async getBufferOfScreenWeeklyPlanning(configuration: Configuration, weekIndex: number): Promise<Buffer> {
-        await this._isReady();
+        if (!this._isReady()) {
+            throw new ApplicationNotReadyError();
+        }
 
-        const page = await this._loadPlanningPage(configuration.planning);
+        const page = await this._getPlanningPage(configuration.planning);
 
         // Scroll to h2 with id "EdT-S<currentWeekIndex>"
-        const element = await page.content.$(`#EdT-S${weekIndex}`)
+        const element = await page.content.$(`#EdT-S${weekIndex}`);
         if (!element) {
             throw new NoWeekPlanningError(weekIndex);
         }
@@ -167,5 +84,138 @@ export class PlanningService {
         } else {
             return res;
         }
+    }
+
+    public static getInstance(): PlanningService {
+        if (!this._instance) {
+            this._instance = new PlanningService();
+        }
+
+        return this._instance;
+    }
+
+
+    private _isReady(): this is PlanningService<true> {
+        return this._puppeteerBrowser != null;
+    }
+
+    private async _refreshPlanningPage(this: PlanningService<true>, url: string): Promise<PlanningPage> {
+        if (this._pendingPages[url] != null) {
+            await this._pendingPages[url];
+        }
+
+        const cache = this._getPageFromCache(url);
+        if (!cache) {
+            return this._getPlanningPage(url);
+        }
+
+        await this._loadPlanningPage(cache.content, url, true);
+        cache.lastUpdatedAt = dayjs().tz(Constants.TIMEZONE);
+
+        return cache;
+    }
+
+    private async _getPlanningPage(this: PlanningService<true>, url: string): Promise<PlanningPage> {
+        if (this._pendingPages[url] != null) {
+            await this._pendingPages[url];
+        }
+
+        const cache = this._getPageFromCache(url);
+        if (cache) {
+            return cache;
+        }
+
+        this._pendingPages[url] = new Promise<PlanningPage>((resolve, reject) => {
+            this._puppeteerBrowser.newPage()
+                .then( page => {
+                    return this._loadPlanningPage(page, url, false);
+                })
+                .then( async page => {
+                    // Only useful if we want to make screenshot of the page
+                    await page.setViewport({ width: 1920, height: 1080 });
+
+                    const cache = this._getPageFromCache(url);
+                    if (cache && cache.content != page) {
+                        this._removePageFromCache(url);
+                    }
+
+                    this._setPageInCache(url, page);
+
+                    resolve(this.cache[url]);
+                })
+                .catch( error => {
+                    console.error(error);
+                    reject(error);
+                })
+        });
+
+        return this._pendingPages[url]
+            .finally( () => {
+                delete this._pendingPages[url];
+            });
+    }
+
+    private async _loadPlanningPage(page: Page, url: string, shouldRefresh: boolean): Promise<Page> {
+        if (page.url() !== url) {
+            await page.goto(url, { waitUntil: 'domcontentloaded' });
+        } else if (shouldRefresh) {
+            await page.reload({ waitUntil: 'domcontentloaded' });
+        }
+
+        // Check if the server redirect us to the login page
+        if (page.url().startsWith('https://login')) {
+            await page.type('#username', Constants.LOGIN);
+            await page.type('#password', Constants.PASSWORD);
+
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+                page.click('input[type=submit]'),
+            ]);
+
+            if (page.url() !== url) {
+                throw Error('An unexpected error occurred during the authentication. Url after authentication: ' + page.url());
+            }
+        }
+
+        return page;
+    }
+
+    private _getPageFromCache(url: string): PlanningPage | undefined {
+        return this.cache[url];
+    }
+    private _removePageFromCache(url: string): void {
+        const cache = this._getPageFromCache(url);
+        if (cache) {
+            cache.content.close();
+            delete this.cache[url];
+        }
+    }
+    private _setPageInCache(url: string, page: Page): void {
+        const cache = this._getPageFromCache(url);
+        if (cache) {
+            cache.lastUpdatedAt = dayjs().tz(Constants.TIMEZONE);
+        } else {
+            this.cache[url] = { content: page, lastUpdatedAt: dayjs().tz(Constants.TIMEZONE) };
+        }
+    }
+
+    /**
+     * Try to initialize the browser. If it fails, it will retry after 5 seconds and increment the retry count.
+     *
+     * @param retryCount Number of retry already done
+     * @private
+     */
+    private _tryInitialize(retryCount = 0): void {
+        puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] })
+            .then( browser => {
+                this._puppeteerBrowser = browser;
+            })
+            .catch( error => {
+                console.error(`An error occurred during the initialization of the browser. Retrying in 5 seconds... (${retryCount} retries)`, error);
+
+                setTimeout( () => {
+                    this._tryInitialize(retryCount + 1);
+                }, 5_000);
+            });
     }
 }

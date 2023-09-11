@@ -65,6 +65,8 @@ export class DailyPlanning {
                 this.lessons[0].title.match(/Période entreprise (\d+) \(Entreprise \1\)/) != null
                 ||
                 this.lessons[0].title.match(/Créneau (\d+)IFA \((\d+)IFA Entreprise (\d+) - Promotion IFA (\d+)-(\d+)\)/) != null
+                ||
+                this.lessons[0].title.match(/Créneau Groupe \((\d+)IFA Entreprise (\d+) - Promotion IFA (\d+)-(\d+)\)/) != null
             );
     }
 
