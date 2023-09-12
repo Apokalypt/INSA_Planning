@@ -1,7 +1,7 @@
 import type { Dayjs } from "dayjs";
 import type { Browser, Page } from "puppeteer";
-import puppeteer from "puppeteer";
 import dayjs from "dayjs";
+import puppeteer from "puppeteer";
 import { PlanningPage } from "@models/PlanningPage";
 import { Configuration } from "@models/Configuration";
 import { DailyPlanning } from "@models/DailyPlanning";
@@ -10,6 +10,13 @@ import { Constants } from "@constants";
 import { NoWeekPlanningError } from "@errors/NoWeekPlanningError";
 import { NoDailyPlanningError } from "@errors/NoDailyPlanningError";
 import { ApplicationNotReadyError } from "@errors/ApplicationNotReadyError";
+
+/*
+ * A current issue with puppeteer block us from using 2 pages at the same time leading to a timeout error. Please, make
+ * sure to use only one page at a time.
+ *
+ * See https://github.com/puppeteer/puppeteer/issues/8693 for more information.
+ */
 
 export class PlanningService<IsReady extends boolean = false> {
     public readonly cache: { [key: string]: PlanningPage };
@@ -23,15 +30,13 @@ export class PlanningService<IsReady extends boolean = false> {
         this.cache = { };
         this._pendingPages = { };
 
-        this._tryInitialize();
-
-        setInterval( () => {
+        setInterval( async () => {
             if (!this._isReady()) {
                 return;
             }
 
             for (const url in this.cache) {
-                this._refreshPlanningPage(url)
+                await this._refreshPlanningPage(url)
                     .catch( console.error );
             }
         }, 15 * 60 * 1000);
@@ -76,14 +81,57 @@ export class PlanningService<IsReady extends boolean = false> {
             throw new NoWeekPlanningError(weekIndex);
         }
 
-        // Screenshots the table and return the buffer
-        const res = await tableElement.screenshot({ type: 'png' });
+        // Bring the page to the front to avoid screenshot to hang forever
+        await page.content.bringToFront(); // FIXME : concurrent access to another page can lead to a timeout error
+
+        const res = await tableElement.screenshot({ type: 'png', encoding: 'binary' });
         if (typeof res === 'string') {
-            // Should never occur, I don't even know how we can get a string here...
+            // Should never occur since we are asking for binary data
             return Buffer.from(res, 'base64');
         } else {
             return res;
         }
+    }
+
+    /**
+     * Try to initialize the browser. If it fails, it will retry after 5 seconds and increment the retry count.
+     * This function should be called as soon as possible to avoid any delay.
+     *
+     * @param callback      Function to call when the browser is ready
+     * @param retryCount    Number of retry already done
+     */
+    public initialize(callback: Function, retryCount = 0): void {
+        puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] })
+            .then( async browser => {
+                this._puppeteerBrowser = browser;
+
+                if (!this._isReady()) {
+                    // Should never occur but use that to avoid TS error
+                    return;
+                }
+
+                // Try to save all planning pages in cache, don't use Promise.all() to avoid using multiple pages at the
+                //  same time (look at the top of the file for more information)
+                for (const configuration of Constants.CONFIGURATIONS) {
+                    try {
+                        await this._getPlanningPage(configuration.planning);
+                    } catch (error) {
+                        console.error(`An error occurred during the initialization of the planning page ${configuration.planning}`, error);
+                    }
+
+                    // Delay interactions with the browser to avoid timeout error, just in case...
+                    await new Promise(resolve => setTimeout(resolve, 1_000));
+                }
+
+                callback();
+            })
+            .catch( error => {
+                console.error(`An error occurred during the initialization of the browser. Retrying in 5 seconds... (${retryCount} retries)`, error);
+
+                setTimeout( () => {
+                    this.initialize(callback, retryCount + 1);
+                }, 5_000);
+            });
     }
 
     public static getInstance(): PlanningService {
@@ -125,6 +173,7 @@ export class PlanningService<IsReady extends boolean = false> {
             return cache;
         }
 
+        // FIXME : concurrent access to another page can lead to a timeout error (multiple pages at the same time)
         this._pendingPages[url] = new Promise<PlanningPage>((resolve, reject) => {
             this._puppeteerBrowser.newPage()
                 .then( page => {
@@ -197,25 +246,5 @@ export class PlanningService<IsReady extends boolean = false> {
         } else {
             this.cache[url] = { content: page, lastUpdatedAt: dayjs().tz(Constants.TIMEZONE) };
         }
-    }
-
-    /**
-     * Try to initialize the browser. If it fails, it will retry after 5 seconds and increment the retry count.
-     *
-     * @param retryCount Number of retry already done
-     * @private
-     */
-    private _tryInitialize(retryCount = 0): void {
-        puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] })
-            .then( browser => {
-                this._puppeteerBrowser = browser;
-            })
-            .catch( error => {
-                console.error(`An error occurred during the initialization of the browser. Retrying in 5 seconds... (${retryCount} retries)`, error);
-
-                setTimeout( () => {
-                    this._tryInitialize(retryCount + 1);
-                }, 5_000);
-            });
     }
 }
