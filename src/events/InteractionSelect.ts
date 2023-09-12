@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { Event } from '@models/Event'
+import { Event } from '@models/discord/Event'
 import { InteractionService } from "@services/InteractionService";
 import { Constants } from "@constants";
 

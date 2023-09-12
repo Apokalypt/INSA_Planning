@@ -1,12 +1,13 @@
 import type { ElementHandle } from "puppeteer";
-import type { BotClient } from "@models/BotClient";
-import type { Configuration } from "@models/Configuration";
+import type { BotClient } from "@models/discord/BotClient";
+import type { Configuration } from "@models/planning/Configuration";
+import type { DiscordPublishable } from "@models/discord/DiscordPublishable";
 import { MessageActionRowComponentBuilder } from "@discordjs/builders";
 import { ActionRowBuilder, AttachmentBuilder, BaseMessageOptions } from "discord.js";
 import { DateService } from "@services/DateService";
 import { InteractionService } from "@services/InteractionService";
 
-export class WeeklyPlanning {
+export class WeeklyPlanning implements DiscordPublishable {
     private readonly _configuration: Configuration;
     private readonly _index: number;
     private readonly _table: ElementHandle;
@@ -52,18 +53,16 @@ export class WeeklyPlanning {
     /**
      * Publish the weekly planning on the dedicated channel
      *
-     * @param configuration
      * @param client
-     * @param disableRefresh
      */
-    async publish(configuration: Configuration, client: BotClient, disableRefresh: boolean) {
-        return client.channels.fetch(configuration.channel)
+    async publish(client: BotClient) {
+        return client.channels.fetch(this._configuration.channel)
             .then(async channel => {
                 if (!channel?.isTextBased()) {
                     return;
                 }
 
-                return channel.send( this.toWebhookEditMessageOptions(disableRefresh) );
+                return channel.send( this.toWebhookEditMessageOptions(false) );
             })
     }
 }

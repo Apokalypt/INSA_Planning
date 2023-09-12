@@ -1,6 +1,6 @@
 import type { Dayjs } from "dayjs";
 import type { InteractionReplyOptions, MessageEditOptions, RepliableInteraction } from "discord.js";
-import type { Configuration } from "@models/Configuration";
+import type { Configuration } from "@models/planning/Configuration";
 import { ButtonBuilder, ButtonStyle } from "discord.js";
 import { PlanningService } from "@services/PlanningService";
 import { CustomError } from "@errors/CustomError";
@@ -27,9 +27,9 @@ export class InteractionService {
             await interaction.deferReply({ ephemeral: true });
         }
 
-        const planning = await PlanningService.getInstance().getDailyPlanning(configuration.planning, date);
+        const planning = await PlanningService.getInstance().getDailyPlanning(configuration, date);
 
-        return this.sendReplyMessage(interaction, planning.toWebhookEditMessageOptions(configuration, !updateCurrentMessage), updateCurrentMessage)
+        return this.sendReplyMessage(interaction, planning.toWebhookEditMessageOptions(!updateCurrentMessage), updateCurrentMessage)
             .catch( err => {
                 if (err instanceof CustomError) {
                     throw err

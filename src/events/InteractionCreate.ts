@@ -1,4 +1,4 @@
-import { Event } from '@models/Event'
+import { Event } from '@models/discord/Event'
 
 export = new Event(
     'interactionCreate',

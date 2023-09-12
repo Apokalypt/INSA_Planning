@@ -3,7 +3,7 @@ import type { Browser, Page } from "puppeteer";
 import dayjs from "dayjs";
 import puppeteer from "puppeteer";
 import { PlanningPage } from "@models/planning/PlanningPage";
-import { Configuration } from "@models/Configuration";
+import { Configuration } from "@models/planning/Configuration";
 import { DailyPlanning } from "@models/planning/DailyPlanning";
 import { WeeklyPlanning } from "@models/planning/WeeklyPlanning";
 import { LessonService } from "@services/LessonService";
@@ -43,12 +43,12 @@ export class PlanningService<IsReady extends boolean = false> {
         }, 15 * 60 * 1000);
     }
 
-    public async getDailyPlanning(url: string, date: Dayjs): Promise<DailyPlanning> {
+    public async getDailyPlanning(configuration: Configuration, date: Dayjs): Promise<DailyPlanning> {
         if (!this._isReady()) {
             throw new ApplicationNotReadyError();
         }
 
-        const page = await this._getPlanningPage(url);
+        const page = await this._getPlanningPage(configuration.planning);
 
         // We search a <th> with the date of the planning we want
         const thDay = (await page.content.$x(`//*[text()[contains(.,'${date.format('DD/MM/YYYY')}')]]`))[0];
@@ -60,7 +60,7 @@ export class PlanningService<IsReady extends boolean = false> {
 
         const lessons = await LessonService.getInstance().getLessons(trDay, date);
 
-        return new DailyPlanning(lessons, date, page.lastUpdatedAt);
+        return new DailyPlanning(configuration, lessons, date, page.lastUpdatedAt);
     }
 
     public async getBufferOfScreenWeeklyPlanning(configuration: Configuration, weekIndex: number): Promise<WeeklyPlanning> {

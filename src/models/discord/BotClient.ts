@@ -1,7 +1,7 @@
 import type { ClientOptions } from 'discord.js'
 import type { BotEvents } from './BotEvents'
 import type { Event } from './Event'
-import type { InteractionCommandData } from "@models/InteractionCommandData";
+import type { InteractionCommandData } from "@models/discord/InteractionCommandData";
 import path from 'path'
 import * as fs from 'fs'
 import { Collection } from 'discord.js'
@@ -29,10 +29,10 @@ export class BotClient extends Client<true> {
      * @private
      */
     private constructor (options: ClientOptions) {
-      super(options);
+        super(options);
 
-      this.version = require('../../package.json').version;
-      this.commands = new Collection<string, InteractionCommandData>();
+        this.version = require('../../../package.json').version;
+        this.commands = new Collection<string, InteractionCommandData>();
 
 
         this._registerClientEvents();
@@ -46,38 +46,38 @@ export class BotClient extends Client<true> {
      * @private
      */
     private _registerClientEvents () {
-      fs.readdirSync(path.join(__dirname, '..', 'events')).filter(file => file.endsWith('.js') || file.endsWith('.ts')).forEach((file) => {
-        const event: Event<keyof BotEvents> = require(path.join(__dirname, '..', 'events', file));
+        fs.readdirSync(path.join(__dirname, '..', '..', 'events')).filter(file => file.endsWith('.js') || file.endsWith('.ts')).forEach((file) => {
+            const event: Event<keyof BotEvents> = require(path.join(__dirname, '..', '..', 'events', file));
 
-        if (event.once) {
-          this.once(event.name, (...args) => event.action(this, ...args));
-        } else {
-          this.on(event.name, (...args) => event.action(this, ...args));
-        }
-      })
+            if (event.once) {
+                this.once(event.name, (...args) => event.action(this, ...args));
+            } else {
+                this.on(event.name, (...args) => event.action(this, ...args));
+            }
+        })
     }
 
     private _registerCommands() {
-        fs.readdirSync(`${__dirname}/../commands/slash`).filter(file => file.endsWith('.js') || file.endsWith('.ts')).forEach((file) => {
-            const command: InteractionCommandData = require(`${__dirname}/../commands/slash/${file}`);
+        fs.readdirSync(`${__dirname}/../../commands/slash`).filter(file => file.endsWith('.js') || file.endsWith('.ts')).forEach((file) => {
+            const command: InteractionCommandData = require(`${__dirname}/../../commands/slash/${file}`);
             this.commands.set(command.data.name, command);
         });
     }
 
     /* ==================== Override function ==================== */
     override emit<K extends keyof BotEvents> (event: K, ...args: BotEvents[K]): boolean {
-      // @ts-ignore
-      return super.emit(event, ...args);
+        // @ts-ignore
+        return super.emit(event, ...args);
     }
 
     override on<K extends keyof BotEvents> (event: K, listener: (...args: BotEvents[K]) => void): this {
-      // @ts-ignore
-      return super.on(event, listener);
+        // @ts-ignore
+        return super.on(event, listener);
     }
 
     override once<K extends keyof BotEvents> (event: K, listener: (...args: BotEvents[K]) => void): this {
-      // @ts-ignore
-      return super.once(event, listener);
+        // @ts-ignore
+        return super.once(event, listener);
     }
 
     /* ===================== Static function ===================== */
@@ -87,11 +87,11 @@ export class BotClient extends Client<true> {
      * @param options Client option with token to log in Discord
      */
     public static async login (options: ClientOptions & { token: string }): Promise<BotClient> {
-      const client = new BotClient(options);
-      await client.login(options.token);
+        const client = new BotClient(options);
+        await client.login(options.token);
 
-      await client.application.fetch();
+        await client.application.fetch();
 
-      return client;
+        return client;
     }
 }

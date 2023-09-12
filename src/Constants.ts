@@ -1,5 +1,5 @@
 import type { PuppeteerLaunchOptions } from "puppeteer";
-import type { Configuration } from "@models/Configuration";
+import type { Configuration } from "@models/planning/Configuration";
 import { GatewayIntentBits } from "discord.js";
 
 export abstract class Constants {

@@ -1,42 +1,42 @@
 import type { Dayjs } from "dayjs";
 import type { Lesson } from "@models/planning/Lesson";
-import type { BotClient } from "@models/BotClient";
+import type { BotClient } from "@models/discord/BotClient";
+import type { Configuration } from "@models/planning/Configuration";
+import type { DiscordPublishable } from "@models/discord/DiscordPublishable";
 import { MessageActionRowComponentBuilder } from "@discordjs/builders";
 import { ActionRowBuilder, BaseMessageOptions, Colors, EmbedBuilder } from "discord.js";
 import { Utils } from "@models/Utils";
-import { Configuration } from "@models/Configuration";
 import { InteractionService } from "@services/InteractionService";
 
-export class DailyPlanning {
+export class DailyPlanning implements DiscordPublishable {
+    private readonly _configuration: Configuration;
     lessons: Lesson[];
     date: Dayjs;
     lastUpdatedAt: Dayjs;
 
 
-    constructor(lessons: Lesson[], date: Dayjs, lastUpdatedAt: Dayjs) {
+    constructor(configuration: Configuration, lessons: Lesson[], date: Dayjs, lastUpdatedAt: Dayjs) {
+        this._configuration = configuration;
         this.lessons = lessons;
         this.date = date;
         this.lastUpdatedAt = lastUpdatedAt;
     }
 
 
-    /**
-     * Generate webhook edit options from the current daily planning
-     */
-    toWebhookEditMessageOptions(configuration: Configuration, disableRefresh: boolean): BaseMessageOptions {
+    toWebhookEditMessageOptions(disableRefresh: boolean): BaseMessageOptions {
         const datePrevious = this.date.subtract(this.date.day() === 1 ? 3 : 1, 'day');
         const dateNext = this.date.add(this.date.day() === 5 ? 3 : 1, 'day');
 
         const service = InteractionService.getInstance();
 
         return {
-            embeds: [this._toEmbed(configuration.planning)],
+            embeds: [this._toEmbed(this._configuration.planning)],
             components: [
                 new ActionRowBuilder<MessageActionRowComponentBuilder>()
                     .addComponents(
-                        service.getDailyPlanningButtonComponent("Précédent", datePrevious, configuration),
-                        service.getRefreshDailyPlanningButtonComponent(this.date, configuration, disableRefresh),
-                        service.getDailyPlanningButtonComponent("Suivant", dateNext, configuration)
+                        service.getDailyPlanningButtonComponent("Précédent", datePrevious, this._configuration),
+                        service.getRefreshDailyPlanningButtonComponent(this.date, this._configuration, disableRefresh),
+                        service.getDailyPlanningButtonComponent("Suivant", dateNext, this._configuration)
                     )
             ],
         };
@@ -46,17 +46,16 @@ export class DailyPlanning {
     /**
      * Publish the daily planning on the dedicated channel
      *
-     * @param configuration
      * @param client
      */
-    async publish(configuration: Configuration, client: BotClient) {
-        return client.channels.fetch(configuration.channel)
+    async publish(client: BotClient) {
+        return client.channels.fetch(this._configuration.channel)
             .then(async channel => {
                 if (!channel?.isTextBased()) {
                     return;
                 }
 
-                await channel.send( this.toWebhookEditMessageOptions(configuration, false) );
+                return channel.send( this.toWebhookEditMessageOptions(false) );
             })
     }
 
