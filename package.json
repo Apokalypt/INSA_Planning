@@ -1,11 +1,11 @@
 {
   "name": "insa_planning",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A typescript discord bot",
   "main": "dist/server.js",
   "scripts": {
     "transpile": "tsc",
-    "build": "npm install --include=dev && npm run transpile && npm install --only=production && cp package*.json dist && sed 's+dist/server.js+server.js+g' package.json > dist/package.json",
+    "build": "npm install --include=dev && npm run transpile && npm install --omit=dev && cp package*.json dist && sed 's+dist/server.js+server.js+g' package.json > dist/package.json",
     "start": "npm install --include=dev && npm run transpile && node dist/server.js",
     "dev": "npm install --include=dev && nodemon --config nodemon.json src/server.ts --trace-warnings",
     "dev:debug": "nodemon --config nodemon.json --inspect src/server.ts --trace-warnings"
