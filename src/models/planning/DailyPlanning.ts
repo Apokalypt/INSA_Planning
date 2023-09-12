@@ -2,9 +2,10 @@ import type { Dayjs } from "dayjs";
 import type { Lesson } from "@models/planning/Lesson";
 import type { BotClient } from "@models/BotClient";
 import { MessageActionRowComponentBuilder } from "@discordjs/builders";
-import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, BaseMessageOptions, Colors, EmbedBuilder } from "discord.js";
 import { Utils } from "@models/Utils";
 import { Configuration } from "@models/Configuration";
+import { InteractionService } from "@services/InteractionService";
 
 export class DailyPlanning {
     lessons: Lesson[];
@@ -22,19 +23,20 @@ export class DailyPlanning {
     /**
      * Generate webhook edit options from the current daily planning
      */
-    toWebhookEditMessageOptions(configuration: Configuration): BaseMessageOptions {
-        const dateString = this.date.add(this.date.day() === 5 ? 3 : 1, 'day').format('DD/MM/YYYY');
+    toWebhookEditMessageOptions(configuration: Configuration, disableRefresh: boolean): BaseMessageOptions {
+        const datePrevious = this.date.subtract(this.date.day() === 1 ? 3 : 1, 'day');
+        const dateNext = this.date.add(this.date.day() === 5 ? 3 : 1, 'day');
+
+        const service = InteractionService.getInstance();
 
         return {
             embeds: [this._toEmbed(configuration.planning)],
             components: [
                 new ActionRowBuilder<MessageActionRowComponentBuilder>()
                     .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId(`${dateString}|${configuration.year}`)
-                            .setLabel("Voir le planning du jour suivant")
-                            .setStyle(ButtonStyle.Primary)
-                            .setEmoji("🗓️")
+                        service.getDailyPlanningButtonComponent("Précédent", datePrevious, configuration),
+                        service.getRefreshDailyPlanningButtonComponent(this.date, configuration, disableRefresh),
+                        service.getDailyPlanningButtonComponent("Suivant", dateNext, configuration)
                     )
             ],
         };
@@ -54,7 +56,7 @@ export class DailyPlanning {
                     return;
                 }
 
-                await channel.send( this.toWebhookEditMessageOptions(configuration) );
+                await channel.send( this.toWebhookEditMessageOptions(configuration, false) );
             })
     }
 

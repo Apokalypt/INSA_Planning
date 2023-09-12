@@ -34,6 +34,22 @@ export = new Event(
 
                 await InteractionService.getInstance()
                     .sendWeeklyPlanningMessage(interaction, configuration, weekIndex);
+            }  else if (id.startsWith('day-planning-refresh')) {
+                const args = id.split('-');
+
+                const data = args[3];
+                const [dateString, year] = data.split('|');
+
+                const configuration = Constants.CONFIGURATIONS.find( c => c.year === Number(year ?? "3") );
+                if (!configuration) {
+                    return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                }
+
+                const date = dayjs.tz(dateString, "DD/MM/YYYY", Constants.TIMEZONE);
+
+                await InteractionService.getInstance().sendTimetableMessage(interaction, date, configuration, true)
+                    .catch( e => InteractionService.getInstance().handleErrorMessage(interaction, e) )
+                    .catch( console.error );
             } else {
                 const [dateString, year] = id.split('|');
                 const configuration = Constants.CONFIGURATIONS.find( c => c.year === Number(year ?? "3") );
