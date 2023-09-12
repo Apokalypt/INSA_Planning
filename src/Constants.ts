@@ -5,7 +5,7 @@ import { GatewayIntentBits } from "discord.js";
 export abstract class Constants {
     // PUPPETEER
     static readonly PUPPETEER_OPTIONS: PuppeteerLaunchOptions = {
-        headless: true,
+        headless: "new",
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',

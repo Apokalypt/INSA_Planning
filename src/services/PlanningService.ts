@@ -2,9 +2,10 @@ import type { Dayjs } from "dayjs";
 import type { Browser, Page } from "puppeteer";
 import dayjs from "dayjs";
 import puppeteer from "puppeteer";
-import { PlanningPage } from "@models/PlanningPage";
+import { PlanningPage } from "@models/planning/PlanningPage";
 import { Configuration } from "@models/Configuration";
-import { DailyPlanning } from "@models/DailyPlanning";
+import { DailyPlanning } from "@models/planning/DailyPlanning";
+import { WeeklyPlanning } from "@models/planning/WeeklyPlanning";
 import { LessonService } from "@services/LessonService";
 import { Constants } from "@constants";
 import { NoWeekPlanningError } from "@errors/NoWeekPlanningError";
@@ -62,7 +63,7 @@ export class PlanningService<IsReady extends boolean = false> {
         return new DailyPlanning(lessons, date, page.lastUpdatedAt);
     }
 
-    public async getBufferOfScreenWeeklyPlanning(configuration: Configuration, weekIndex: number): Promise<Buffer> {
+    public async getBufferOfScreenWeeklyPlanning(configuration: Configuration, weekIndex: number): Promise<WeeklyPlanning> {
         if (!this._isReady()) {
             throw new ApplicationNotReadyError();
         }
@@ -83,14 +84,9 @@ export class PlanningService<IsReady extends boolean = false> {
 
         // Bring the page to the front to avoid screenshot to hang forever
         await page.content.bringToFront(); // FIXME : concurrent access to another page can lead to a timeout error
-
         const res = await tableElement.screenshot({ type: 'png', encoding: 'binary' });
-        if (typeof res === 'string') {
-            // Should never occur since we are asking for binary data
-            return Buffer.from(res, 'base64');
-        } else {
-            return res;
-        }
+
+        return new WeeklyPlanning(configuration, weekIndex, tableElement, res);
     }
 
     /**

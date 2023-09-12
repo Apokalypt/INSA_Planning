@@ -68,7 +68,7 @@ export = {
                     }
                 ],
                 ephemeral: true
-            });
+            }, false);
         }
     }
 } satisfies SlashCommandModel;

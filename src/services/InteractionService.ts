@@ -1,9 +1,7 @@
 import type { Dayjs } from "dayjs";
-import type { InteractionReplyOptions, RepliableInteraction } from "discord.js";
+import type { InteractionReplyOptions, MessageEditOptions, RepliableInteraction } from "discord.js";
 import type { Configuration } from "@models/Configuration";
-import { MessageActionRowComponentBuilder } from "@discordjs/builders";
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { DateService } from "@services/DateService";
+import { ButtonBuilder, ButtonStyle } from "discord.js";
 import { PlanningService } from "@services/PlanningService";
 import { CustomError } from "@errors/CustomError";
 
@@ -24,9 +22,7 @@ export class InteractionService {
         }
 
         return PlanningService.getInstance().getDailyPlanning(configuration.planning, date)
-            .then( async timetable => {
-                return interaction.editReply(timetable.toWebhookEditMessageOptions(configuration));
-            })
+            .then( async timetable => interaction.editReply(timetable.toWebhookEditMessageOptions(configuration)) )
             .catch( err => {
                 if (err instanceof CustomError) {
                     throw err
@@ -37,33 +33,30 @@ export class InteractionService {
             });
     }
 
-    public async sendWeeklyPlanningMessage(interaction: RepliableInteraction, configuration: Configuration, weekIndex: number) {
-        if (!interaction.deferred && !interaction.replied) {
+    public async sendWeeklyPlanningMessage(interaction: RepliableInteraction, configuration: Configuration, weekIndex: number, updateCurrentMessage = false) {
+        if (updateCurrentMessage) {
+            if (!interaction.isButton()) {
+                throw new CustomError("Impossible de mettre à jour le message si l'interaction n'est pas un bouton.");
+            }
+
+            await interaction.deferUpdate();
+        } else if (!interaction.deferred && !interaction.replied) {
             await interaction.deferReply({ ephemeral: true });
         }
 
-        const buffer = await PlanningService.getInstance().getBufferOfScreenWeeklyPlanning(configuration, weekIndex);
-        const attachmentPlanning = new AttachmentBuilder(buffer, { name: "planning.png" })
+        const planning = await PlanningService.getInstance().getBufferOfScreenWeeklyPlanning(configuration, weekIndex);
 
-        await this.sendReplyMessage(
-            interaction,
-            {
-                files: [attachmentPlanning],
-                components: [
-                    new ActionRowBuilder<MessageActionRowComponentBuilder>()
-                        .addComponents(
-                            this.getWeeklyPlanningButtonComponent("Précédent", configuration.year, DateService.getInstance().getPreviousWeekIndex(weekIndex)),
-                            this.getRefreshWeeklyPlanningButtonComponent(configuration.year, weekIndex),
-                            this.getWeeklyPlanningButtonComponent("Suivant", configuration.year, DateService.getInstance().getNextWeekIndex(weekIndex))
-                        )
-                ],
-                ephemeral: true
-            }
-        );
+        return this.sendReplyMessage(interaction, planning.toWebhookEditMessageOptions(!updateCurrentMessage), updateCurrentMessage);
     }
 
-    public async sendReplyMessage(interaction: RepliableInteraction, payload: InteractionReplyOptions) {
-        if (interaction.deferred) {
+    public async sendReplyMessage(interaction: RepliableInteraction, payload: InteractionReplyOptions, updateCurrentMessage: boolean) {
+        if (updateCurrentMessage) {
+            if (!interaction.isButton()) {
+                throw new CustomError("Impossible de mettre à jour le message si l'interaction n'est pas un bouton.");
+            }
+
+            return interaction.message.edit(payload as MessageEditOptions);
+        } else if (interaction.deferred) {
             return interaction.editReply(payload);
         } else {
             return interaction.reply(payload);
@@ -89,12 +82,13 @@ export class InteractionService {
             .setLabel(str)
             .setStyle(ButtonStyle.Primary);
     }
-    public getRefreshWeeklyPlanningButtonComponent(year: number, weekIndex: number) {
+    public getRefreshWeeklyPlanningButtonComponent(year: number, weekIndex: number, isDisabled = false) {
         return new ButtonBuilder()
-            .setCustomId(`week-planning-${year}-${weekIndex}`)
-            .setLabel("\u200b")
-            .setStyle(ButtonStyle.Secondary)
-            .setDisabled(true);
+            .setCustomId(`week-planning-refresh-${year}-${weekIndex}`)
+            .setLabel("Refresh")
+            .setEmoji("🔄")
+            .setDisabled( isDisabled )
+            .setStyle(ButtonStyle.Secondary);
     }
 }
 

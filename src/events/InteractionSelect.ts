@@ -27,7 +27,8 @@ export = new Event(
                     {
                         content: "Impossible de déterminer l'action à réaliser...",
                         ephemeral: true
-                    }
+                    },
+                    false
                 )
 
                 break;

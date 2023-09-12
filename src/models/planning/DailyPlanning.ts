@@ -1,9 +1,10 @@
-import type { BotClient } from "@models/BotClient";
 import type { Dayjs } from "dayjs";
-import type { Lesson } from "@models/Lesson";
+import type { Lesson } from "@models/planning/Lesson";
+import type { BotClient } from "@models/BotClient";
+import { MessageActionRowComponentBuilder } from "@discordjs/builders";
 import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder } from "discord.js";
 import { Utils } from "@models/Utils";
-import { MessageActionRowComponentBuilder } from "@discordjs/builders";
+import { Configuration } from "@models/Configuration";
 
 export class DailyPlanning {
     lessons: Lesson[];
@@ -17,10 +18,11 @@ export class DailyPlanning {
         this.lastUpdatedAt = lastUpdatedAt;
     }
 
+
     /**
      * Generate webhook edit options from the current daily planning
      */
-    toWebhookEditMessageOptions(configuration: { planning: string, year: number }): BaseMessageOptions {
+    toWebhookEditMessageOptions(configuration: Configuration): BaseMessageOptions {
         const dateString = this.date.add(this.date.day() === 5 ? 3 : 1, 'day').format('DD/MM/YYYY');
 
         return {
@@ -45,14 +47,14 @@ export class DailyPlanning {
      * @param configuration
      * @param client
      */
-    async publish(configuration: { planning: string, channel: string, year: number }, client: BotClient) {
+    async publish(configuration: Configuration, client: BotClient) {
         return client.channels.fetch(configuration.channel)
             .then(async channel => {
                 if (!channel?.isTextBased()) {
                     return;
                 }
 
-                await channel.send(this.toWebhookEditMessageOptions(configuration));
+                await channel.send( this.toWebhookEditMessageOptions(configuration) );
             })
     }
 
