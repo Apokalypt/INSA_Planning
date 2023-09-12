@@ -44,18 +44,6 @@ function initializeCronJobsForAllConfigurations(client: BotClient) {
 
                     // Send an embed with planning for the next day
                     return planning.publish(client);
-                })
-                .catch( async err => {
-                    console.error(err);
-
-                    const channel = await client.channels.fetch(Constants.DISCORD_CHANNEL_ID_ON_ERROR);
-                    if (!channel?.isTextBased()) {
-                        return;
-                    }
-
-                    return channel.send({
-                        content: `Une erreur est survenue lors de l'envoi du planning des "${conf.name}": ${err.message}`
-                    });
                 });
         }, undefined, true, Constants.TIMEZONE, undefined, false);
 
@@ -65,18 +53,6 @@ function initializeCronJobsForAllConfigurations(client: BotClient) {
             return PlanningService.getInstance()
                 .getBufferOfScreenWeeklyPlanning(conf, DateService.getInstance().getNextWeekIndex())
                 .then( async planning => planning.publish(client) )
-                .catch( async err => {
-                    console.error(err);
-
-                    const channel = await client.channels.fetch(Constants.DISCORD_CHANNEL_ID_ON_ERROR);
-                    if (!channel?.isTextBased()) {
-                        return;
-                    }
-
-                    return channel.send({
-                        content: `Une erreur est survenue lors de l'envoi du planning des "${conf.name}": ${err.message}`
-                    });
-                });
         }, undefined, true, Constants.TIMEZONE, undefined, false);
     });
 }

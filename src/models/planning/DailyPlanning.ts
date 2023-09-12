@@ -1,29 +1,28 @@
 import type { Dayjs } from "dayjs";
 import type { Lesson } from "@models/planning/Lesson";
-import type { BotClient } from "@models/discord/BotClient";
 import type { Configuration } from "@models/planning/Configuration";
-import type { DiscordPublishable } from "@models/discord/DiscordPublishable";
 import { MessageActionRowComponentBuilder } from "@discordjs/builders";
 import { ActionRowBuilder, BaseMessageOptions, Colors, EmbedBuilder } from "discord.js";
 import { Utils } from "@models/Utils";
+import { DiscordPublishable } from "@models/discord/DiscordPublishable";
 import { InteractionService } from "@services/InteractionService";
 
-export class DailyPlanning implements DiscordPublishable {
-    private readonly _configuration: Configuration;
+export class DailyPlanning extends DiscordPublishable {
     lessons: Lesson[];
     date: Dayjs;
     lastUpdatedAt: Dayjs;
 
 
     constructor(configuration: Configuration, lessons: Lesson[], date: Dayjs, lastUpdatedAt: Dayjs) {
-        this._configuration = configuration;
+        super(configuration);
+
         this.lessons = lessons;
         this.date = date;
         this.lastUpdatedAt = lastUpdatedAt;
     }
 
 
-    toWebhookEditMessageOptions(disableRefresh: boolean): BaseMessageOptions {
+    override toWebhookEditMessageOptions(disableRefresh: boolean): BaseMessageOptions {
         const datePrevious = this.date.subtract(this.date.day() === 1 ? 3 : 1, 'day');
         const dateNext = this.date.add(this.date.day() === 5 ? 3 : 1, 'day');
 
@@ -40,23 +39,6 @@ export class DailyPlanning implements DiscordPublishable {
                     )
             ],
         };
-    }
-
-
-    /**
-     * Publish the daily planning on the dedicated channel
-     *
-     * @param client
-     */
-    async publish(client: BotClient) {
-        return client.channels.fetch(this._configuration.channel)
-            .then(async channel => {
-                if (!channel?.isTextBased()) {
-                    return;
-                }
-
-                return channel.send( this.toWebhookEditMessageOptions(false) );
-            })
     }
 
     /**

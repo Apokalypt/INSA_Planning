@@ -86,7 +86,7 @@ export class PlanningService<IsReady extends boolean = false> {
         await page.content.bringToFront(); // FIXME : concurrent access to another page can lead to a timeout error
         const res = await tableElement.screenshot({ type: 'png', encoding: 'binary' });
 
-        return new WeeklyPlanning(configuration, weekIndex, tableElement, res);
+        return new WeeklyPlanning(configuration, weekIndex, res);
     }
 
     /**
