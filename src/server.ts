@@ -7,7 +7,7 @@ if (process.env.ENV == "local") {
     dotenv.config();
 }
 
-import { BotClient } from '@models/BotClient'
+import { BotClient } from '@models/discord/BotClient'
 import { Constants } from "@constants";
 
 // Setup for the dayjs library

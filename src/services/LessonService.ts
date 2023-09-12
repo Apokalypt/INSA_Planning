@@ -1,6 +1,6 @@
 import { Dayjs } from "dayjs";
 import { ElementHandle } from "puppeteer";
-import { Lesson } from "@models/Lesson";
+import { Lesson } from "@models/planning/Lesson";
 import { HtmlService } from "@services/HtmlService";
 import { Constants } from "@constants";
 import { InvalidHtmlElementError } from "@errors/InvalidHtmlElementError";

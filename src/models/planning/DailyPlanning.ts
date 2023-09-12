@@ -1,59 +1,44 @@
-import type { BotClient } from "@models/BotClient";
 import type { Dayjs } from "dayjs";
-import type { Lesson } from "@models/Lesson";
-import { ActionRowBuilder, BaseMessageOptions, ButtonBuilder, ButtonStyle, Colors, EmbedBuilder } from "discord.js";
-import { Utils } from "@models/Utils";
+import type { Lesson } from "@models/planning/Lesson";
+import type { Configuration } from "@models/planning/Configuration";
 import { MessageActionRowComponentBuilder } from "@discordjs/builders";
+import { ActionRowBuilder, BaseMessageOptions, Colors, EmbedBuilder } from "discord.js";
+import { Utils } from "@models/Utils";
+import { DiscordPublishable } from "@models/discord/DiscordPublishable";
+import { InteractionService } from "@services/InteractionService";
 
-export class DailyPlanning {
+export class DailyPlanning extends DiscordPublishable {
     lessons: Lesson[];
     date: Dayjs;
     lastUpdatedAt: Dayjs;
 
 
-    constructor(lessons: Lesson[], date: Dayjs, lastUpdatedAt: Dayjs) {
+    constructor(configuration: Configuration, lessons: Lesson[], date: Dayjs, lastUpdatedAt: Dayjs) {
+        super(configuration);
+
         this.lessons = lessons;
         this.date = date;
         this.lastUpdatedAt = lastUpdatedAt;
     }
 
-    /**
-     * Generate webhook edit options from the current daily planning
-     */
-    toWebhookEditMessageOptions(configuration: { planning: string, year: number }): BaseMessageOptions {
-        const dateString = this.date.add(this.date.day() === 5 ? 3 : 1, 'day').format('DD/MM/YYYY');
+
+    override toWebhookEditMessageOptions(disableRefresh: boolean): BaseMessageOptions {
+        const datePrevious = this.date.subtract(this.date.day() === 1 ? 3 : 1, 'day');
+        const dateNext = this.date.add(this.date.day() === 5 ? 3 : 1, 'day');
+
+        const service = InteractionService.getInstance();
 
         return {
-            embeds: [this._toEmbed(configuration.planning)],
+            embeds: [this._toEmbed(this._configuration.planning)],
             components: [
                 new ActionRowBuilder<MessageActionRowComponentBuilder>()
                     .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId(`${dateString}|${configuration.year}`)
-                            .setLabel("Voir le planning du jour suivant")
-                            .setStyle(ButtonStyle.Primary)
-                            .setEmoji("🗓️")
+                        service.getDailyPlanningButtonComponent("Précédent", datePrevious, this._configuration),
+                        service.getRefreshDailyPlanningButtonComponent(this.date, this._configuration, disableRefresh),
+                        service.getDailyPlanningButtonComponent("Suivant", dateNext, this._configuration)
                     )
             ],
         };
-    }
-
-
-    /**
-     * Publish the daily planning on the dedicated channel
-     *
-     * @param configuration
-     * @param client
-     */
-    async publish(configuration: { planning: string, channel: string, year: number }, client: BotClient) {
-        return client.channels.fetch(configuration.channel)
-            .then(async channel => {
-                if (!channel?.isTextBased()) {
-                    return;
-                }
-
-                await channel.send(this.toWebhookEditMessageOptions(configuration));
-            })
     }
 
     /**

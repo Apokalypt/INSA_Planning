@@ -1,4 +1,4 @@
-import type { SlashCommandModel } from "@models/SlashCommandModel";
+import type { SlashCommandModel } from "@models/discord/SlashCommandModel";
 import { SlashCommandBuilder, SlashCommandIntegerOption } from "@discordjs/builders";
 import { DateService } from "@services/DateService";
 import { InteractionService } from "@services/InteractionService";

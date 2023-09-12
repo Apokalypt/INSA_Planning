@@ -1,6 +1,6 @@
 import type { SlashCommandBuilder, SlashCommandSubcommandsOnlyBuilder } from "@discordjs/builders";
 import type { ChatInputCommandInteraction } from "discord.js";
-import type { BotClient } from "@models/BotClient";
+import type { BotClient } from "@models/discord/BotClient";
 
 export interface InteractionCommandData {
     readonly data: SlashCommandBuilder | SlashCommandSubcommandsOnlyBuilder;

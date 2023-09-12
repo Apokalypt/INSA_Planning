@@ -1,11 +1,11 @@
 import type { PuppeteerLaunchOptions } from "puppeteer";
-import type { Configuration } from "@models/Configuration";
+import type { Configuration } from "@models/planning/Configuration";
 import { GatewayIntentBits } from "discord.js";
 
 export abstract class Constants {
     // PUPPETEER
     static readonly PUPPETEER_OPTIONS: PuppeteerLaunchOptions = {
-        headless: true,
+        headless: "new",
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',

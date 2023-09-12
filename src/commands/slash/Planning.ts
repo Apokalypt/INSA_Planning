@@ -1,4 +1,4 @@
-import type { SlashCommandModel } from "@models/SlashCommandModel";
+import type { SlashCommandModel } from "@models/discord/SlashCommandModel";
 import { ComponentType, SelectMenuComponentOptionData } from "discord.js";
 import { SlashCommandBuilder, SlashCommandIntegerOption, SlashCommandStringOption } from "@discordjs/builders";
 import { DateService } from "@services/DateService";
@@ -68,7 +68,7 @@ export = {
                     }
                 ],
                 ephemeral: true
-            });
+            }, false);
         }
     }
 } satisfies SlashCommandModel;

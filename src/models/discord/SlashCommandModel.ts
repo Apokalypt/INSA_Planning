@@ -1,5 +1,5 @@
-import type { BotClient } from "@models/BotClient";
 import type { ChatInputCommandInteraction } from "discord.js";
+import type { BotClient } from "@models/discord/BotClient";
 
 export interface SlashCommandModel {
     readonly data: any;
