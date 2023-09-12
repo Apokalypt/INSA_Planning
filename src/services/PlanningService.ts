@@ -101,7 +101,7 @@ export class PlanningService<IsReady extends boolean = false> {
      * @param retryCount    Number of retry already done
      */
     public initialize(callback: Function, retryCount = 0): void {
-        puppeteer.launch({ headless: "new", args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu'] })
+        puppeteer.launch(Constants.PUPPETEER_OPTIONS)
             .then( async browser => {
                 this._puppeteerBrowser = browser;
 

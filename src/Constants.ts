@@ -1,7 +1,23 @@
+import type { PuppeteerLaunchOptions } from "puppeteer";
 import type { Configuration } from "@models/Configuration";
 import { GatewayIntentBits } from "discord.js";
 
 export abstract class Constants {
+    // PUPPETEER
+    static readonly PUPPETEER_OPTIONS: PuppeteerLaunchOptions = {
+        headless: true,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+        ]
+    }
+
     // DISCORD
     static readonly DISCORD_MAX_NUMBER_OPTIONS_SELECT_MENU = 25;
     static readonly DISCORD_BOT_TOKEN = process.env.INSA_PLANNING_BOT_TOKEN ?? '';
