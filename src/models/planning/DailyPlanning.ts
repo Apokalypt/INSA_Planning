@@ -74,15 +74,19 @@ export class DailyPlanning extends DiscordPublishable {
         } else {
             embed.setColor(Colors.Yellow);
 
-            let lastLesson: Lesson;
-            this.lessons.forEach( lesson => {
-                embed.setDescription(
-                    (embed.data.description ?? '') +
-                    `${!lastLesson || lastLesson.endDate.isSame(lesson.startDate) ? "\n" : "\n\n-----\n\n"}` +
-                    lesson.toStringEmbed()
-                );
-                lastLesson = lesson;
-            });
+            let description = embed.data.description ?? '';
+            let previousLesson: Lesson | undefined;
+            for (const lesson of this.lessons) {
+                if (previousLesson?.endDate.isSame(lesson.startDate)) {
+                    description += "\n";
+                } else if (previousLesson) {
+                    description += "\n-----\n\n";
+                }
+                description += lesson.toStringEmbed() + "\n";
+
+                previousLesson = lesson;
+            }
+            embed.setDescription(description);
 
             return embed;
         }
