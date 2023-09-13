@@ -87,6 +87,7 @@ export class InteractionService {
         return new ButtonBuilder()
             .setCustomId(`week-planning-${year}-${weekIndex}`)
             .setLabel(str)
+            .setEmoji("🗓️")
             .setStyle(ButtonStyle.Primary);
     }
     public getRefreshWeeklyPlanningButtonComponent(year: number, weekIndex: number, isDisabled = false) {
@@ -102,8 +103,8 @@ export class InteractionService {
         return new ButtonBuilder()
             .setCustomId(`${date.format('DD/MM/YYYY')}|${configuration.year}`)
             .setLabel(str)
-            .setStyle(ButtonStyle.Primary)
-            .setEmoji("🗓️");
+            .setEmoji("🗓️")
+            .setStyle(ButtonStyle.Primary);
     }
     public getRefreshDailyPlanningButtonComponent(date: Dayjs, configuration: Configuration, isDisabled = false) {
         return new ButtonBuilder()
