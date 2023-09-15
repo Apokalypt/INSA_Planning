@@ -114,13 +114,13 @@ jobs:
         run: ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: 'Clean up deployment directory'
-        run: ssh -A -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'cd /home/${{ secrets.SSH_USER }}/${{ vars.BOT_DIR_NAME }} && find . -maxdepth 1 -mindepth 1 ! -name 'node_modules' -exec rm -rf {} \;'
+        run: ssh -A -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'cd /home/${{ secrets.SSH_USER }}/${{ secrets.BOT_DIR_NAME }} && find . -maxdepth 1 -mindepth 1 ! -name 'node_modules' -exec rm -rf {} \;'
 
       - name: 'Deploy source code with rsync'
-        run: rsync -avz -e "ssh -A -p ${{ secrets.SSH_PORT }}" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/${{ vars.BOT_DIR_NAME }}/
+        run: rsync -avz -e "ssh -A -p ${{ secrets.SSH_PORT }}" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/${{ secrets.SSH_USER }}/${{ secrets.BOT_DIR_NAME }}/
 
       - name: 'Install dependencies'
-        run: ssh -A -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'cd /home/${{ secrets.SSH_USER }}/${{ vars.BOT_DIR_NAME }}/ && npm install'
+        run: ssh -A -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'cd /home/${{ secrets.SSH_USER }}/${{ secrets.BOT_DIR_NAME }}/ && npm install'
 
       - name: 'Restart bot'
-        run: ssh -A -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'pm2 restart ${{ vars.BOT_PM2_NAME }}'
+        run: ssh -A -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'pm2 restart ${{ secrets.BOT_PM2_NAME }}'
