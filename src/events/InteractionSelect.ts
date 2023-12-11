@@ -13,7 +13,8 @@ export = new Event(
                     const [dateString, year] = interaction.values[0].split('|');
                     const configuration = Constants.CONFIGURATIONS.find( c => c.year === Number(year) );
                     if (!configuration) {
-                        return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                        await interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                        return;
                     }
 
                     const date = dayjs.tz(dateString, "DD/MM/YYYY", Constants.TIMEZONE);
@@ -29,7 +30,7 @@ export = new Event(
                             ephemeral: true
                         },
                         false
-                    )
+                    );
 
                     break;
             }
