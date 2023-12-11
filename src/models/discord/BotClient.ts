@@ -49,9 +49,13 @@ export class BotClient extends Client<true> {
             const event: Event<keyof BotEvents> = require(path.join(__dirname, '..', '..', 'events', file));
 
             if (event.once) {
-                this.once(event.name, (...args) => event.action(this, ...args));
+                this.once(event.name, (...args) => {
+                    event.action(this, ...args);
+                });
             } else {
-                this.on(event.name, (...args) => event.action(this, ...args));
+                this.on(event.name, (...args) => {
+                    event.action(this, ...args);
+                });
             }
         })
     }
