@@ -6,15 +6,11 @@ export = new Event(
     async (client, interaction) => {
         if (interaction.isChatInputCommand()) {
             client.emit('interactionCommand', interaction);
-            return;
-        }
-        if (interaction.isStringSelectMenu()) {
+        } else if (interaction.isStringSelectMenu()) {
             client.emit('interactionSelect', interaction);
             return;
-        }
-        if (interaction.isButton()) {
+        } else if (interaction.isButton()) {
             client.emit('interactionButton', interaction);
-            return;
         }
     }
 );

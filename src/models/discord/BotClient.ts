@@ -4,8 +4,7 @@ import type { Event } from './Event'
 import type { InteractionCommandData } from "@models/discord/InteractionCommandData";
 import path from 'path'
 import * as fs from 'fs'
-import { Collection } from 'discord.js'
-import { Client } from 'discord.js'
+import { Collection, Client } from 'discord.js'
 
 /**
  * Extension of the djs client to add some data
