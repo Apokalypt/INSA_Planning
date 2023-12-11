@@ -43,7 +43,7 @@ export class LessonService {
         const teacher = await HtmlService.getInstance().getText(otherData[1]);
 
         const description = await HtmlService.getInstance().getText(trLessonData[0].$('td'));
-        let descriptionGroups = description.match(Constants.REG_LESSON_FULL_DESCRIPTION)?.groups;
+        let descriptionGroups = Constants.REG_LESSON_FULL_DESCRIPTION.exec(description)?.groups;
 
         let place: string;
         let startTime: string;
@@ -51,13 +51,13 @@ export class LessonService {
             startTime = await HtmlService.getInstance().getText(otherData[0]); // Format: HHhMM
             place = `${descriptionGroups.room} | ${descriptionGroups.department} ( ${descriptionGroups.building} )`;
         } else {
-            descriptionGroups = description.match(Constants.REG_LESSON_SHORT_DESCRIPTION)?.groups;
+            descriptionGroups = Constants.REG_LESSON_SHORT_DESCRIPTION.exec(description)?.groups;
             if (!descriptionGroups) {
                 throw new InvalidHtmlElementError('aucun élément comportant le nom et le type de la leçon n\'a été trouvé');
             }
 
             const startHourPlace = await HtmlService.getInstance().getText(otherData[0]); // Format: HHhMM @ Place
-            let startGroups = startHourPlace.match(Constants.REG_LESSON_START_TIME_WITH_PLACE)?.groups;
+            let startGroups = Constants.REG_LESSON_START_TIME_WITH_PLACE.exec(startHourPlace)?.groups;
             if (!startGroups) {
                 throw new InvalidHtmlElementError('aucun élément comportant l\'heure de début n\'a été trouvé');
             }

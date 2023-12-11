@@ -16,7 +16,7 @@ export abstract class Constants {
             '--single-process',
             '--disable-gpu'
         ]
-    }
+    };
 
     // DISCORD
     static readonly DISCORD_MAX_NUMBER_OPTIONS_SELECT_MENU = 25;
@@ -54,7 +54,7 @@ export abstract class Constants {
     static readonly REG_LESSON_FULL_DESCRIPTION = /(?<name>.*) \((?<room>.*) - (?<department>.*) - (?<building>.*)\) \[(?<type>(CM|TD|TP|EV|EDT))]/;
     static readonly REG_LESSON_SHORT_DESCRIPTION = /(?<name>.*) \[(?<type>(CM|TD|TP|EDT|EV))]/;
 
-    static readonly REG_LESSON_START_TIME_WITH_PLACE = /(?<startHour>[0-2][0-9][h:][0-5][0-9])([ \u00A0]@[ \u00A0](?<place>.*))?/;
+    static readonly REG_LESSON_START_TIME_WITH_PLACE = /(?<startHour>[0-2]\d[h:][0-5]\d])([ \u00A0]@[ \u00A0](?<place>.*))?/;
 
     static readonly DISCORD_CHANNEL_ID_ON_ERROR = "859153422540734490";
 }

@@ -27,7 +27,7 @@ function initializeCronJobsForAllConfigurations(client: BotClient) {
     Constants.CONFIGURATIONS.forEach( (conf, i) => {
         // Plan a cron task to be executed the sunday, monday, tuesday, wednesday and thursday at 20:00 Europe/Paris
         conf.cron.daily?.stop();
-        conf.cron.daily = new CronJob(i + " 20 * * 0,1,2,3,4", async () => {
+        conf.cron.daily = new CronJob(i + " 20 * * 0,1,2,3,4", () => {
             const datePlanning = dayjs().tz(Constants.TIMEZONE).add(1, 'day');
             if (!DateService.getInstance().isWorkDay(datePlanning)) {
                 // If it's the weekend, do nothing
@@ -35,7 +35,7 @@ function initializeCronJobsForAllConfigurations(client: BotClient) {
             }
 
             // Retrieve timetable for a specific day
-            return PlanningService.getInstance()
+            PlanningService.getInstance()
                 .getDailyPlanning(conf, datePlanning)
                 .then( async planning => {
                     if (planning.isDuringEnterprisePeriod()) {
@@ -43,14 +43,14 @@ function initializeCronJobsForAllConfigurations(client: BotClient) {
                     }
 
                     // Send an embed with planning for the next day
-                    return planning.publish(client);
+                    await planning.publish(client);
                 });
         }, undefined, true, Constants.TIMEZONE, undefined, false);
 
         // Plan a cron task to be executed the saturday at 20:00 Europe/Paris
         conf.cron.weekly?.stop();
-        conf.cron.weekly = new CronJob(i + " 20 * * 6", async () => {
-            return PlanningService.getInstance()
+        conf.cron.weekly = new CronJob(i + " 20 * * 6", () => {
+            PlanningService.getInstance()
                 .getBufferOfScreenWeeklyPlanning(conf, DateService.getInstance().getNextWeekIndex())
                 .then( async planning => planning.publish(client) )
         }, undefined, true, Constants.TIMEZONE, undefined, false);

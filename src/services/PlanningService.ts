@@ -31,15 +31,12 @@ export class PlanningService<IsReady extends boolean = false> {
         this.cache = { };
         this._pendingPages = { };
 
-        setInterval( async () => {
+        setInterval( () => {
             if (!this._isReady()) {
                 return;
             }
 
-            for (const url in this.cache) {
-                await this._refreshPlanningPage(url)
-                    .catch( console.error );
-            }
+            this._refreshPages();
         }, 15 * 60 * 1000);
     }
 
@@ -241,6 +238,13 @@ export class PlanningService<IsReady extends boolean = false> {
             cache.lastUpdatedAt = dayjs().tz(Constants.TIMEZONE);
         } else {
             this.cache[url] = { content: page, lastUpdatedAt: dayjs().tz(Constants.TIMEZONE) };
+        }
+    }
+
+    private async _refreshPages(this: PlanningService<true>) {
+        for (const url in this.cache) {
+            await this._refreshPlanningPage(url)
+                .catch( console.error );
         }
     }
 }
