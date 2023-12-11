@@ -47,11 +47,11 @@ export class DailyPlanning extends DiscordPublishable {
     public isDuringEnterprisePeriod(): boolean {
         return this.lessons.length === 1
             && (
-                this.lessons[0].title.match(/Période entreprise (\d+) \(Entreprise \1\)/) != null
+                /Période entreprise (\d+) \(Entreprise \1\)/.exec(this.lessons[0].title) != null
                 ||
-                this.lessons[0].title.match(/Créneau (\d+)IFA \((\d+)IFA Entreprise (\d+) - Promotion IFA (\d+)-(\d+)\)/) != null
+                /Créneau (\d+)IFA \((\d+)IFA Entreprise (\d+) - Promotion IFA (\d+)-(\d+)\)/.exec(this.lessons[0].title) != null
                 ||
-                this.lessons[0].title.match(/Créneau Groupe \((\d+)IFA Entreprise (\d+) - Promotion IFA (\d+)-(\d+)\)/) != null
+                /Créneau Groupe \((\d+)IFA Entreprise (\d+) - Promotion IFA (\d+)-(\d+)\)/.exec(this.lessons[0].title) != null
             );
     }
 

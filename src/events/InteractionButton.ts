@@ -17,7 +17,8 @@ export = new Event(
 
                 const configuration = Constants.CONFIGURATIONS.find( c => c.year === year);
                 if (!configuration) {
-                    return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    await interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    return;
                 }
 
                 await InteractionService.getInstance()
@@ -29,7 +30,8 @@ export = new Event(
 
                 const configuration = Constants.CONFIGURATIONS.find( c => c.year === year);
                 if (!configuration) {
-                    return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    await interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    return;
                 }
 
                 await InteractionService.getInstance()
@@ -42,7 +44,8 @@ export = new Event(
 
                 const configuration = Constants.CONFIGURATIONS.find( c => c.year === Number(year ?? "3") );
                 if (!configuration) {
-                    return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    await interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    return;
                 }
 
                 const date = dayjs.tz(dateString, "DD/MM/YYYY", Constants.TIMEZONE);
@@ -54,7 +57,8 @@ export = new Event(
                 const [dateString, year] = id.split('|');
                 const configuration = Constants.CONFIGURATIONS.find( c => c.year === Number(year ?? "3") );
                 if (!configuration) {
-                    return interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    await interaction.reply({ ephemeral: true, content: "Impossible de trouver la configuration." });
+                    return;
                 }
 
                 const date = dayjs.tz(dateString, "DD/MM/YYYY", Constants.TIMEZONE);

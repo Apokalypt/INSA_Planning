@@ -4,8 +4,7 @@ import type { Event } from './Event'
 import type { InteractionCommandData } from "@models/discord/InteractionCommandData";
 import path from 'path'
 import * as fs from 'fs'
-import { Collection } from 'discord.js'
-import { Client } from 'discord.js'
+import { Collection, Client } from 'discord.js'
 
 /**
  * Extension of the djs client to add some data
@@ -50,9 +49,13 @@ export class BotClient extends Client<true> {
             const event: Event<keyof BotEvents> = require(path.join(__dirname, '..', '..', 'events', file));
 
             if (event.once) {
-                this.once(event.name, (...args) => event.action(this, ...args));
+                this.once(event.name, (...args) => {
+                    event.action(this, ...args);
+                });
             } else {
-                this.on(event.name, (...args) => event.action(this, ...args));
+                this.on(event.name, (...args) => {
+                    event.action(this, ...args);
+                });
             }
         })
     }

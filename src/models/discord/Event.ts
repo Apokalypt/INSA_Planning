@@ -13,14 +13,14 @@ export class Event<K extends keyof BotEvents> {
     /**
      * Indicate if this event definition should be executed only one time or not
      */
-    public readonly once: Boolean;
+    public readonly once: boolean;
     /**
      * Coded to be executed once the event is emitted
      */
-    public readonly action: (client: BotClient, ...args: BotEvents[K]) => void;
+    public readonly action: (client: BotClient, ...args: BotEvents[K]) => void | Promise<void>;
 
     /* =============== CONSTRUCTOR ================ */
-    public constructor (name: K, once: Boolean, action: (client: BotClient, ...args: BotEvents[K]) => void) {
+    public constructor (name: K, once: boolean, action: (client: BotClient, ...args: BotEvents[K]) => void | Promise<void>) {
       this.name = name;
       this.once = once;
       this.action = action
