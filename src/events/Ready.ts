@@ -24,7 +24,7 @@ export = new Event(
 );
 
 function initializeCronJobsForAllConfigurations(client: BotClient) {
-    Constants.CONFIGURATIONS.map( (conf, i) => {
+    Constants.CONFIGURATIONS.forEach( (conf, i) => {
         // Plan a cron task to be executed the sunday, monday, tuesday, wednesday and thursday at 20:00 Europe/Paris
         conf.cron.daily?.stop();
         conf.cron.daily = new CronJob(i + " 20 * * 0,1,2,3,4", async () => {
