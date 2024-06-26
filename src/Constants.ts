@@ -16,7 +16,7 @@ export abstract class Constants {
             '--single-process',
             '--disable-gpu'
         ]
-    }
+    };
 
     // DISCORD
     static readonly DISCORD_MAX_NUMBER_OPTIONS_SELECT_MENU = 25;
@@ -37,15 +37,15 @@ export abstract class Constants {
     static readonly CONFIGURATIONS: Configuration[] = [
         {
             year: 3,
-            planning: "https://servif-cocktail.insa-lyon.fr/EdT/3IFA.php",
-            channel: "1143301054625226813",
+            planning: "https://servif.insa-lyon.fr/EdT/3IFA.php",
+            channel: "1255444229610541086",
             name: "3IFA",
             cron: { }
         },
         {
             year: 4,
-            planning: "https://servif-cocktail.insa-lyon.fr/EdT/4IFA.php",
-            channel: "885433068511428648",
+            planning: "https://servif.insa-lyon.fr/EdT/4IFA.php",
+            channel: "1143301054625226813",
             name: "4IFA",
             cron: { }
         }
