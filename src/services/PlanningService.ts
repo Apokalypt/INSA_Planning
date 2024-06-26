@@ -208,7 +208,7 @@ export class PlanningService<IsReady extends boolean = false> {
         }
 
         // Check if the server redirect us to the login page
-        if (page.url().startsWith('https://login')) {
+        if (!page.url().startsWith(url)) {
             await page.type('#username', Constants.LOGIN);
             await page.type('#password', Constants.PASSWORD);
 
